@@ -141,7 +141,7 @@ app.post("/api/messages/getMessageContent", async (req, res) => {
   const refreshToken_ = req.body.refreshToken;
   try {
     const message = await getMessage(messageId_, refreshToken_);
-    res.send(message);
+    res.send({ message_content: message });
   } catch (err) {
     res.status(500).send("Error getting message");
   }
