@@ -3,9 +3,9 @@ const bodyParser = require("body-parser");
 
 const express = require("express");
 
-const https = require("https");
-const fs = require("fs");
-const path = require("path");
+//const https = require("https");
+//const fs = require("fs");
+//const path = require("path");
 
 const { google } = require("googleapis");
 const { OAuth2Client } = require("google-auth-library");
@@ -14,18 +14,20 @@ const { OAuth2Client } = require("google-auth-library");
 const app = express();
 
 //포트 지정
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 443;
 
+/*
 const sslOptions = {
   key: fs.readFileSync(path.resolve("./ssl/ssl.key")),
   cert: fs.readFileSync(path.resolve("./ssl/ssl.crt")),
 };
+*/
 
 //JSON 설정
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
-const server = https.createServer(sslOptions, app);
+//const server = https.createServer(sslOptions, app);
 
 //application info
 const CLIENT_ID =
@@ -44,26 +46,51 @@ async function getOAuth2Client(refreshToken) {
   return oAuth2Client;
 }
 
-async function handleGmailNotification(gmail, req, res) {
-  // Get the email message ID from the notification
-  const messageID = req.body.message.data;
+async function getRemoveDuplicatesMessagesId(gmail, historyId) {
+  const res = await gmail.users.history.list({
+    userId: "me",
+    startHistoryId: historyId,
+  });
 
+  const do_this_func = res.data.history ? 1 : 0;
+
+  const messageIds = [];
+
+  if (do_this_func == 1) {
+    for (const item of res.data.history) {
+      if (!item.messagesDeleted) {
+        for (const message of item.messages) {
+          messageIds.push(message.id);
+        }
+      }
+    }
+
+    return Array.from(new Set(messageIds));
+  }
+}
+
+async function getMessage(auth, messageId) {
+  const gmail = google.gmail({ version: "v1", auth: auth });
+  const res = await gmail.users.messages.get({
+    userId: "me",
+    id: messageId,
+  });
+  return res.data;
+}
+
+async function handleGmailNotification(user, emailMessage, res) {
   try {
-    // Fetch the email message using the Gmail API
-    const emailMessage = await gmail.users.messages.get({
-      userId: "me",
-      id: messageID,
-    });
-
     // Extract the necessary information from the email message
-    const emailSubject = emailMessage.data.payload.headers.find(
+    const emailSubject = emailMessage.payload.headers.find(
       (header) => header.name === "Subject"
     ).value;
-    const emailFrom = emailMessage.data.payload.headers.find(
+    const emailFrom = emailMessage.payload.headers.find(
       (header) => header.name === "From"
     ).value;
 
-    console.log(`Received new email from ${emailFrom}: ${emailSubject}`);
+    console.log(
+      `Received new email from ${emailFrom} to "${user.name}" <${user.authentication.email.email}>: ${emailSubject}`
+    );
 
     try {
       // Replace the URL with your Bubble app's API endpoint URL
@@ -95,8 +122,6 @@ async function handleGmailNotification(gmail, req, res) {
         error
       );
     }
-
-    res.sendStatus(200);
   } catch (error) {
     console.error("Error while fetching email message:", error);
     res.sendStatus(500);
@@ -144,6 +169,10 @@ async function run() {
 
 run();
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
   const oAuth2Client = await getOAuth2Client(req.body.refreshToken);
 
@@ -165,17 +194,43 @@ app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
   });
 });
 
-// 웹훅 라우터
-app.post("/api/gmailAPIWebhook", (req, res) => {
-  console.log("동작");
-  // Gmail API에서 전송된 데이터 확인
-  const data = req.body;
-  console.log(data);
+// 구글 sub를 위한 웹훅 라우터
+app.post("/api/gmailAPIWebhook", async (req, res) => {
+  //req 데이터를 디코딩하고 "req_message_data_decoded"에 저장
+  const base64EncodedString = req.body.message.data;
+  const buffer = Buffer.from(base64EncodedString, "base64");
+  const decodedString = buffer.toString("utf-8");
 
-  res.status(200).send("OK");
+  const req_message_data_decoded = JSON.parse(decodedString);
+
+  const users = await axios.get(
+    "https://togglecampus.org/version-test/api/1.1/obj/user"
+  );
+
+  users.data.response.results.forEach(async (user) => {
+    if (
+      user.authentication.email.email === req_message_data_decoded.emailAddress
+    ) {
+      const gmail_refresh_token = user.gmail_refresh_token;
+      const oAuth2Client = await getOAuth2Client(gmail_refresh_token);
+      const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+      const messagesIds = await getRemoveDuplicatesMessagesId(
+        gmail,
+        req_message_data_decoded.historyId
+      );
+      if (messagesIds && messagesIds.length !== 0) {
+        messagesIds.forEach(async (messagesId) => {
+          const emailMessage = await getMessage(oAuth2Client, messagesId);
+          handleGmailNotification(user, emailMessage, res);
+        });
+      }
+    }
+  });
+  res.sendStatus(200);
 });
 
 // 서버 시작
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
