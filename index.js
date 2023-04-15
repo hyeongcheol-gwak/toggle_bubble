@@ -14,7 +14,7 @@ const { OAuth2Client } = require("google-auth-library");
 const app = express();
 
 //포트 지정
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 const sslOptions = {
   key: fs.readFileSync(path.resolve("./ssl/ssl.key")),
@@ -31,8 +31,7 @@ const server = https.createServer(sslOptions, app);
 const CLIENT_ID =
   "9447466321-9mm8v9p1ohln9dqjoeql8p7q6iemjvo0.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
-const REDIRECT_URI =
-  "https://togglecampus.bubbleapps.io/version-test/google_email_test";
+const REDIRECT_URI = "https://togglecampus.org/version-test/google_email_test";
 
 //get oauth2client
 async function getOAuth2Client(refreshToken) {
@@ -69,7 +68,7 @@ async function handleGmailNotification(gmail, req, res) {
     try {
       // Replace the URL with your Bubble app's API endpoint URL
       const bubbleApiUrl =
-        "https://togglecampus.bubbleapps.io/version-test/api/1.1/wf/receive_email_info";
+        "https://togglecampus.org/version-test/api/1.1/wf/receive_email_info";
 
       // Replace 'your_bubble_api_key' with your Bubble app's API key
       const bubbleApiKey = "8a440d780583413427646e1ac0cc374c";
@@ -127,7 +126,7 @@ async function setMailAlarm(user) {
 
 async function run() {
   const users = await axios.get(
-    "https://togglecampus.bubbleapps.io/version-test/api/1.1/obj/user"
+    "https://togglecampus.org/version-test/api/1.1/obj/user"
   );
 
   users.data.response.results.forEach((user) => {
