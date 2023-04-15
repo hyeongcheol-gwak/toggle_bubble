@@ -46,18 +46,23 @@ async function getOAuth2Client(refreshToken) {
   return oAuth2Client;
 }
 
+function logCompleteJsonObject(jsonObject) {
+  console.log(JSON.stringify(jsonObject, null, 4));
+}
+
 async function getRemoveDuplicatesMessagesId(gmail, historyId) {
   const res = await gmail.users.history.list({
     userId: "me",
     startHistoryId: historyId,
   });
+
   const do_this_func = res.data.history ? 1 : 0;
 
   const messageIds = [];
 
   if (do_this_func == 1) {
     for (const item of res.data.history) {
-      if (item.messagesAdded) {
+      if (!item.messagesDeleted) {
         for (const message of item.messages) {
           messageIds.push(message.id);
         }
@@ -65,7 +70,7 @@ async function getRemoveDuplicatesMessagesId(gmail, historyId) {
     }
 
     return Array.from(new Set(messageIds));
-  }
+  } else return Array.from(new Set(messageIds));
 }
 
 async function getMessage(auth, messageId) {
@@ -195,6 +200,7 @@ app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
 
 // 구글 sub를 위한 웹훅 라우터
 app.post("/api/gmailAPIWebhook", async (req, res) => {
+  console.log(req.body);
   //req 데이터를 디코딩하고 "req_message_data_decoded"에 저장
   const base64EncodedString = req.body.message.data;
   const buffer = Buffer.from(base64EncodedString, "base64");
