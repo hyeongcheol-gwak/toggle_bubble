@@ -136,7 +136,7 @@ async function getMessage(messageId, refreshToken) {
 
 run();
 
-app.get("/api/messages/getMessageContent", async (req, res) => {
+app.post("/api/messages/getMessageContent", async (req, res) => {
   const messageId_ = req.body.messageId;
   const refreshToken_ = req.body.refreshToken;
   try {
