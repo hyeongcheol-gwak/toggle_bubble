@@ -114,7 +114,7 @@ app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
       res.status(500).send(err);
       return;
     }
-    res.status(200).send("OK");
+    res.status(200).send({ status: "ok" });
     console.log(`Successfully set gmail alarm for ${req.body.userName}`);
   });
 });
