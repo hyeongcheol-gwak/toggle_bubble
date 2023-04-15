@@ -46,23 +46,18 @@ async function getOAuth2Client(refreshToken) {
   return oAuth2Client;
 }
 
-function logCompleteJsonObject(jsonObject) {
-  console.log(JSON.stringify(jsonObject, null, 4));
-}
-
 async function getRemoveDuplicatesMessagesId(gmail, historyId) {
   const res = await gmail.users.history.list({
     userId: "me",
     startHistoryId: historyId,
   });
-  logCompleteJsonObject(res.data);
   const do_this_func = res.data.history ? 1 : 0;
 
   const messageIds = [];
 
   if (do_this_func == 1) {
     for (const item of res.data.history) {
-      if (!item.messagesDeleted) {
+      if (item.messagesAdded) {
         for (const message of item.messages) {
           messageIds.push(message.id);
         }
