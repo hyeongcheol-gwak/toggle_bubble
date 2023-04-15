@@ -1,41 +1,23 @@
+/**************************************************************************************************/
 const axios = require("axios");
 const bodyParser = require("body-parser");
-
 const express = require("express");
-
-//const https = require("https");
-//const fs = require("fs");
-//const path = require("path");
-
 const { google } = require("googleapis");
 const { OAuth2Client } = require("google-auth-library");
-
-//REST API 서버 생성
 const app = express();
-
-//포트 지정
 const port = process.env.PORT || 80;
-
-/*
-const sslOptions = {
-  key: fs.readFileSync(path.resolve("./ssl/ssl.key")),
-  cert: fs.readFileSync(path.resolve("./ssl/ssl.crt")),
-};
-*/
-
-//JSON 설정
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-
-//const server = https.createServer(sslOptions, app);
-
-//application info
 const CLIENT_ID =
   "9447466321-9mm8v9p1ohln9dqjoeql8p7q6iemjvo0.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
 const REDIRECT_URI = "https://togglecampus.org/version-test/google_email_test";
+function logCompleteJsonObject(jsonObject) {
+  console.log(JSON.stringify(jsonObject, null, 4));
+}
+/**************************************************************************************************/
+// above things are not important.
 
-//get oauth2client
 async function getOAuth2Client(refreshToken) {
   const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
@@ -44,10 +26,6 @@ async function getOAuth2Client(refreshToken) {
   });
 
   return oAuth2Client;
-}
-
-function logCompleteJsonObject(jsonObject) {
-  console.log(JSON.stringify(jsonObject, null, 4));
 }
 
 async function getRemoveDuplicatesMessagesId(gmail, historyId) {
@@ -201,12 +179,14 @@ app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
 // 구글 sub를 위한 웹훅 라우터
 app.post("/api/gmailAPIWebhook", async (req, res) => {
   console.log(req.body);
+
   //req 데이터를 디코딩하고 "req_message_data_decoded"에 저장
   const base64EncodedString = req.body.message.data;
   const buffer = Buffer.from(base64EncodedString, "base64");
   const decodedString = buffer.toString("utf-8");
 
   const req_message_data_decoded = JSON.parse(decodedString);
+  console.log(req_message_data_decoded);
 
   const users = await axios.get(
     "https://togglecampus.org/version-test/api/1.1/obj/user"
