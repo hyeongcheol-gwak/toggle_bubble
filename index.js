@@ -96,7 +96,56 @@ async function run() {
   }, 604800000); //일주일 마다 전체 유저를 체크하여 알람 설정을 켜줌. 일주일은 구글의 권장사항임.
 }
 
+async function getMessage(messageId, refreshToken) {
+  try {
+    const oAuth2Client = await getOAuth2Client(refreshToken);
+
+    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+    // 메일의 full format을 가져오기 위해 format 파라미터를 설정합니다.
+    const res = await gmail.users.messages.get({
+      userId: "me",
+      id: messageId,
+      format: "full",
+    });
+    const message = res.data;
+
+    // 본문 내용을 찾습니다.
+    let bodyData;
+    const { payload } = message;
+    if (payload.parts && payload.parts.length > 0) {
+      // parts 배열을 순회하면서 mimeType이 text/plain 또는 text/html인 part를 찾습니다.
+      for (let i = 0; i < payload.parts.length; i++) {
+        const part = payload.parts[i];
+        if (part.mimeType === "text/plain" || part.mimeType === "text/html") {
+          bodyData = part.body.data;
+          break;
+        }
+      }
+    } else {
+      bodyData = payload.body.data;
+    }
+    // base64 인코딩된 데이터를 디코딩합니다.
+    const decodedData = Buffer.from(bodyData, "base64").toString("utf-8");
+    return decodedData;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
+
 run();
+
+app.get("/api/messages/getMessageContent", async (req, res) => {
+  const messageId_ = req.body.messageId;
+  const refreshToken_ = req.body.refreshToken;
+  try {
+    const message = await getMessage(messageId_, refreshToken_);
+    res.send(message);
+  } catch (err) {
+    res.status(500).send("Error getting message");
+  }
+});
 
 app.post("/api/users/newGmailUpdateSuccess", async (req, res) => {
   res.status(200).send({ status: "ok" });
