@@ -14,7 +14,7 @@ const { OAuth2Client } = require("google-auth-library");
 const app = express();
 
 //포트 지정
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 /*
 const sslOptions = {
