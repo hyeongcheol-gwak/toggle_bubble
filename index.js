@@ -98,6 +98,16 @@ async function run() {
 
 run();
 
+app.post("/api/users/newGmailUpdateSuccess", async (req, res) => {
+  res.status(200).send({ status: "ok" });
+  console.log(`Successfully update bubble DB of <${req.body.userEmail}>`);
+});
+
+app.post("/api/users/notNewGmail", async (req, res) => {
+  res.status(200).send({ status: "ok" });
+  console.log(`This log is not for new gmail alarm`);
+});
+
 app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
   const oAuth2Client = await getOAuth2Client(req.body.refreshToken);
 
@@ -125,9 +135,7 @@ app.post("/api/gmailAPIWebhook", async (req, res) => {
   const decodedString = buffer.toString("utf-8");
 
   const req_message_data_decoded = JSON.parse(decodedString);
-  console.log(
-    `Received new log from <${req_message_data_decoded.emailAddress}>`
-  );
+  console.log(`Get new log from <${req_message_data_decoded.emailAddress}>`);
 
   const users = await axios.get(
     "https://togglecampus.org/version-test/api/1.1/obj/user"
