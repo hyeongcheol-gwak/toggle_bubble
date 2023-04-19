@@ -202,9 +202,9 @@ app.post("/api/openAi/summary", async (req, res) => {
   try {
     const text = req.body.text;
     const summary = await summarizeText(text);
-    res.json({ summary });
+    res.status(200).json({ summary });
   } catch (error) {
-    console.error(error);
+    console.error("Error processing bubble DB update of openAiSummary:", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
