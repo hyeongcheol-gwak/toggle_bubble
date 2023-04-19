@@ -29,7 +29,7 @@ const OPENAI_API_URL =
 
 const openAiHeaders = {
   "Content-Type": "application/json",
-  "Authorization": `Bearer ${OPENAI_API_KEY}`
+  Authorization: `Bearer ${OPENAI_API_KEY}`,
 };
 
 const openai = new OpenAIApi(configuration);
@@ -235,11 +235,20 @@ setGmailAlarmAll();
 
 app.post("/api/openAi/summary", async (req, res) => {
   try {
-    console.log(req);
-    const text = req.body.text;
-    console.log(text);
-    const summary_ = await summarizeText(text);
-    res.status(200).send({ summary: summary_ });
+    const email_infos = await axios.get(
+      "https://togglecampus.org/version-test/api/1.1/obj/email_info"
+    );
+    for (const email_info of email_infos.data.response.results.reverse()) {
+      if (
+        email_info.from === req.body.from &&
+        email_info.to === req.body.to &&
+        email_info.subject === req.body.subject
+      ) {
+        const summary_ = await summarizeText(email_info.content);
+        res.status(200).send({ summary: summary_ });
+        return;
+      }
+    }
   } catch (error) {
     console.error("Error processing bubble DB update of openAiSummary:", error);
     res.status(500).send("Something went wrong");
