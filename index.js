@@ -237,10 +237,10 @@ app.post("/api/openAi/summary", async (req, res) => {
   try {
     const text = req.body.text;
     const summary_ = await summarizeText(text);
-    res.status(200).json({ summary: summary_ });
+    res.status(200).send({ summary: summary_ });
   } catch (error) {
     console.error("Error processing bubble DB update of openAiSummary:", error);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).send("Something went wrong");
   }
 });
 
@@ -259,10 +259,7 @@ app.post("/api/messages/getMessageContent", async (req, res) => {
 
 app.post("/api/users/newGmailUpdateSuccess", async (req, res) => {
   try {
-    const text = req.body.text;
-    const summary_ = await summarizeText(text);
-
-    res.status(200).send({ status: "ok", summary: summary_ });
+    res.status(200).send({ status: "ok" });
     console.log(`Received new email from <${req.body.userEmail}>`);
   } catch (err) {
     console.error("Error processing bubble DB update of new Gmail:", err);
