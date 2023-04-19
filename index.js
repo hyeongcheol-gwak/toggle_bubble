@@ -235,6 +235,7 @@ setGmailAlarmAll();
 
 app.post("/api/openAi/summary", async (req, res) => {
   try {
+    console.log(req);
     const text = req.body.text;
     console.log(text);
     const summary_ = await summarizeText(text);
