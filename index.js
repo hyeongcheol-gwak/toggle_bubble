@@ -9,9 +9,9 @@ const { Configuration, OpenAIApi } = require("openai");
 
 const config = require("./config/config");
 
-const configuration = new Configuration({
-  apiKey: config.OPENAI_API_KEY,
-});
+const CLIENT_ID = config.CLIENT_ID;
+const CLIENT_SECRET = config.CLIENT_SECRET;
+const REDIRECT_URI = config.REDIRECT_URI;
 
 const app = express();
 const port = process.env.PORT || 80;
@@ -19,9 +19,18 @@ const port = process.env.PORT || 80;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const CLIENT_ID = config.CLIENT_ID;
-const CLIENT_SECRET = config.CLIENT_SECRET;
-const REDIRECT_URI = config.REDIRECT_URI;
+const configuration = new Configuration({
+  apiKey: config.OPENAI_API_KEY,
+});
+
+const OPENAI_API_KEY = config.OPENAI_API_KEY;
+const OPENAI_API_URL =
+  "https://api.openai.com/v1/engines/davinci-codex/completions";
+
+const openAiHeaders = {
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${OPENAI_API_KEY}`
+};
 
 const openai = new OpenAIApi(configuration);
 
@@ -115,6 +124,7 @@ async function getGmailContent(messageId, refreshToken) {
   }
 }
 
+/*
 async function getLatestEmail() {
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
   const response = await gmail.users.messages.list({
@@ -134,11 +144,12 @@ async function getLatestEmail() {
   });
   return messageResponse.data;
 }
+*/
 
 async function summarizeText(text) {
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Summarize the following text into one or two setences":\n\n${text}\n\nSummary:`,
+    prompt: `summarize the following text into one or two sentences: ${text}`,
     max_tokens: 1000,
     temperature: 0.2,
     n: 1,
@@ -146,6 +157,30 @@ async function summarizeText(text) {
   const summary = result.data.choices[0].text.trim();
 
   return summary;
+}
+
+async function summarizeMessage(message) {
+  const prompt = `summarize the information into one or two sentences: ${message}`;
+
+  try {
+    const response = await axios.post(
+      OPENAI_API_URL,
+      {
+        prompt,
+        max_tokens: 100,
+        n: 1,
+        stop: null,
+        temperature: 0.5,
+      },
+      { headers: openAiHeaders }
+    );
+
+    const summary = response.data.choices[0].text.trim();
+    return summary;
+  } catch (error) {
+    console.error("Error calling OpenAI API:", error);
+    return null;
+  }
 }
 
 async function setGmailAlarm(user) {
@@ -224,7 +259,10 @@ app.post("/api/messages/getMessageContent", async (req, res) => {
 
 app.post("/api/users/newGmailUpdateSuccess", async (req, res) => {
   try {
-    res.status(200).send({ status: "ok" });
+    const text = req.body.text;
+    const summary_ = await summarizeText(text);
+
+    res.status(200).send({ status: "ok", summary: summary_ });
     console.log(`Received new email from <${req.body.userEmail}>`);
   } catch (err) {
     console.error("Error processing bubble DB update of new Gmail:", err);
