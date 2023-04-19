@@ -1,8 +1,17 @@
 const axios = require("axios");
 const bodyParser = require("body-parser");
+
 const express = require("express");
+
 const { google } = require("googleapis");
 const { OAuth2Client } = require("google-auth-library");
+const { Configuration, OpenAIApi } = require("openai");
+
+const config = require("./config/config");
+
+const configuration = new Configuration({
+  apiKey: config.OPENAI_API_KEY,
+});
 
 const app = express();
 const port = process.env.PORT || 80;
@@ -10,10 +19,11 @@ const port = process.env.PORT || 80;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const CLIENT_ID =
-  "9447466321-9mm8v9p1ohln9dqjoeql8p7q6iemjvo0.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
-const REDIRECT_URI = "https://togglecampus.org/version-test/google_email_test";
+const CLIENT_ID = config.CLIENT_ID;
+const CLIENT_SECRET = config.CLIENT_SECRET;
+const REDIRECT_URI = config.REDIRECT_URI;
+
+const openai = new OpenAIApi(configuration);
 
 function logCompleteJsonObject(jsonObject) {
   console.log(JSON.stringify(jsonObject, null, 4));
@@ -105,6 +115,39 @@ async function getGmailContent(messageId, refreshToken) {
   }
 }
 
+async function getLatestEmail() {
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+  const response = await gmail.users.messages.list({
+    userId: "me",
+    maxResults: 1,
+    // q: 'is:unread'
+  });
+  const message = response.data.messages[0];
+  if (!message) {
+    console.log("No messages found.");
+    return null;
+  }
+  const messageResponse = await gmail.users.messages.get({
+    userId: "me",
+    id: message.id,
+    format: "full",
+  });
+  return messageResponse.data;
+}
+
+async function summarizeText(text) {
+  const result = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `Summarize the following text into one or two setences":\n\n${text}\n\nSummary:`,
+    max_tokens: 1000,
+    temperature: 0.2,
+    n: 1,
+  });
+  const summary = result.data.choices[0].text.trim();
+
+  return summary;
+}
+
 async function setGmailAlarm(user) {
   try {
     const RefreshToken = user.gmail_refresh_token;
@@ -154,6 +197,17 @@ async function setGmailAlarmAll() {
 }
 
 setGmailAlarmAll();
+
+app.post("/api/openAi/summary", async (req, res) => {
+  try {
+    const text = req.body.text;
+    const summary = await summarizeText(text);
+    res.status(200).json({ summary });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
 
 app.post("/api/messages/getMessageContent", async (req, res) => {
   const messageId_ = req.body.messageId;
