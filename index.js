@@ -201,8 +201,8 @@ setGmailAlarmAll();
 app.post("/api/openAi/summary", async (req, res) => {
   try {
     const text = req.body.text;
-    const summary = await summarizeText(text);
-    res.status(200).json({ summary });
+    const summary_ = await summarizeText(text);
+    res.status(200).json({ summary: summary_ });
   } catch (error) {
     console.error("Error processing bubble DB update of openAiSummary:", error);
     res.status(500).json({ error: "Something went wrong" });
