@@ -34,10 +34,6 @@ const openAiHeaders = {
 
 const openai = new OpenAIApi(configuration);
 
-function logCompleteJsonObject(jsonObject) {
-  console.log(JSON.stringify(jsonObject, null, 4));
-}
-
 async function getOAuth2Client(refreshToken) {
   try {
     const oAuth2Client = new OAuth2Client(
@@ -238,16 +234,25 @@ app.post("/api/openAi/summary", async (req, res) => {
     const email_infos = await axios.get(
       "https://togglecampus.org/version-test/api/1.1/obj/email_info"
     );
-    for (const email_info of email_infos.data.response.results.reverse()) {
-      if (
-        email_info.from === req.body.from &&
-        email_info.to === req.body.to &&
-        email_info.subject === req.body.subject
-      ) {
-        const summary_ = await summarizeText(email_info.content);
-        res.status(200).send({ summary: summary_ });
-        return;
-      }
+
+    const filteredEmails = email_infos.data.response.results.filter((email) => {
+      const from = email.from;
+      const to = email.to;
+      const subject = email.subject;
+
+      return (
+        from.includes(req.body.from) &&
+        to.includes(req.body.to) &&
+        subject.includes(req.body.subject)
+      );
+    });
+
+    if (filteredEmails[0]) {
+      const summary_ = await summarizeText(filteredEmails[0].content);
+      res.status(200).send({ summary: summary_ });
+    } else {
+      console.log("Request for non-existent email info");
+      res.status(404).send("Request for non-existent email info");
     }
   } catch (error) {
     console.error("Error processing bubble DB update of openAiSummary:", error);
