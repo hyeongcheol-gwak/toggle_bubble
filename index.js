@@ -239,7 +239,10 @@ app.post("/api/openAi/summary", async (req, res) => {
       .pop()
       .replace(/\u00AD/g, "");
 
-    const bubbleRequestUrlProcessed = url.replace(url.split("/").pop(), uid);
+    const bubbleRequestUrlProcessed = bubbleRequestUrlUnprocessed.replace(
+      bubbleRequestUrlUnprocessed.split("/").pop(),
+      uid
+    );
 
     const email_infos = await axios.get(bubbleRequestUrlProcessed);
 
