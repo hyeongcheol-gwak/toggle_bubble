@@ -232,14 +232,14 @@ setGmailAlarmAll();
 
 app.post("/api/openAi/summary", async (req, res) => {
   try {
-    const bubbleRequestUrlUnprocessed = `https://togglecampus.org/version-test/api/1.1/obj/email_info/${req.body.uid}`;
+    const bubbleRequestUrlProcessed = `https://togglecampus.org/version-test/api/1.1/obj/email_info/${req.body.uid}`;
 
-    const uid = bubbleRequestUrlUnprocessed
-      .split("/")
-      .pop()
-      .replace(/\u00AD/g, "");
+    // const uid = bubbleRequestUrlUnprocessed
+    //   .split("/")
+    //   .pop()
+    //   .replace(/\u00AD/g, "");
 
-    const bubbleRequestUrlProcessed = url.replace(url.split("/").pop(), uid);
+    // const bubbleRequestUrlProcessed = url.replace(url.split("/").pop(), uid);
 
     const email_infos = await axios.get(bubbleRequestUrlProcessed);
 
