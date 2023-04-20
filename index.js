@@ -1,5 +1,6 @@
 const axios = require("axios");
 const bodyParser = require("body-parser");
+const querystring = require("querystring");
 
 const express = require("express");
 
@@ -231,24 +232,19 @@ setGmailAlarmAll();
 
 app.post("/api/openAi/summary", async (req, res) => {
   try {
-    const email_infos = await axios.get(
-      "https://togglecampus.org/version-test/api/1.1/obj/email_info"
-    );
+    const bubbleRequestUrlUnprocessed = `https://togglecampus.org/version-test/api/1.1/obj/email_info/${req.body.uid}`;
 
-    const filteredEmails = email_infos.data.response.results.filter((email) => {
-      const from = email.from;
-      const to = email.to;
-      const subject = email.subject;
+    const uid = bubbleRequestUrlUnprocessed
+      .split("/")
+      .pop()
+      .replace(/\u00AD/g, "");
 
-      return (
-        from.includes(req.body.from) &&
-        to.includes(req.body.to) &&
-        subject.includes(req.body.subject)
-      );
-    });
+    const bubbleRequestUrlProcessed = url.replace(url.split("/").pop(), uid);
 
-    if (filteredEmails[0]) {
-      const summary_ = await summarizeText(filteredEmails[0].content);
+    const email_infos = await axios.get(bubbleRequestUrlProcessed);
+
+    if (email_infos.data.response) {
+      const summary_ = await summarizeText(email_infos.data.response.content);
       console.log(`Summarized the email from <${req.body.to}>`);
       res.status(200).send({ summary: summary_ });
     } else {
