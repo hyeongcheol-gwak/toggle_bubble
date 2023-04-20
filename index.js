@@ -249,6 +249,7 @@ app.post("/api/openAi/summary", async (req, res) => {
 
     if (filteredEmails[0]) {
       const summary_ = await summarizeText(filteredEmails[0].content);
+      console.log(`Summarized the email from <${req.body.to}>`);
       res.status(200).send({ summary: summary_ });
     } else {
       console.log("Request for non-existent email info");
