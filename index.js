@@ -374,7 +374,7 @@ app.post("/webhook/gmail", async (req, res) => {
       ],
       function (error) {
         if (error) throw error;
-        console.log(`Get new gmail of <${message.gmail_to}>`);
+        console.log(`Get new gmail of ${message.gmail_to}`);
       }
     );
     res.sendStatus(200);
