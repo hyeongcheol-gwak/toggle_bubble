@@ -233,7 +233,7 @@ async function setGmailAlarm(gmail_user) {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const request = {
-      labelIds: ["INBOX"],
+      labelIds: ["INBOX", "UNREAD"],
       topicName: "projects/bubble-gmail-383603/topics/GmailAPIPush",
       userId: "me",
     };
@@ -287,7 +287,7 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const request = {
-      labelIds: ["INBOX"],
+      labelIds: ["INBOX", "UNREAD"],
       topicName: "projects/bubble-gmail-383603/topics/GmailAPIPush",
       userId: "me",
     };
