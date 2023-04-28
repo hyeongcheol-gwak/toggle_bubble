@@ -240,13 +240,13 @@ async function setGmailAlarm(gmail_user) {
 
     gmail.users.watch(request, (err) => {
       if (err) {
-        console.error("Error while setting gmail alarm:", err);
+        console.error("Error while setting gmail push notification:", err);
       } else {
-        console.log(`Set gmail alarm of <${gmail_user.gmail}>`);
+        console.log(`Set gmail push notification of <${gmail_user.gmail}>`);
       }
     });
   } catch (error) {
-    console.error("Error while setting gmail alarm:", error);
+    console.error("Error while setting gmail push notification:", error);
     throw error;
   }
 }
@@ -256,7 +256,7 @@ async function setGmailAlarm(gmail_user) {
  */
 async function setGmailAlarmAll() {
   try {
-    console.log(`Start setting gmail alarm of all users`);
+    console.log(`Start setting gmail push notification of all gmail users`);
 
     const gmail_users = await getGmailUserAll();
 
@@ -270,7 +270,10 @@ async function setGmailAlarmAll() {
       run();
     }, 604800000);
   } catch (error) {
-    console.error("Error while setting gmail alarm of all users:", error);
+    console.error(
+      "Error while setting gmail push notification of all gmail users:",
+      error
+    );
     throw error;
   }
 }
@@ -291,15 +294,15 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
 
     gmail.users.watch(request, (err) => {
       if (err) {
-        console.error("Error while setting gmail alarm:", err);
+        console.error("Error while setting push notification:", err);
         res.status(500).send(err);
       } else {
         res.status(200).send({ status: "ok" });
-        console.log(`Set gmail alarm for <${req.body.gmail}>`);
+        console.log(`Set gmail push notification of <${req.body.gmail}>`);
       }
     });
   } catch (error) {
-    console.error("Error while setting gmail alarm:", error);
+    console.error("Error while setting gmail push notification:", error);
     res.status(500).send(error);
   }
 });
@@ -375,6 +378,7 @@ app.post("/webhook/gmail", async (req, res) => {
         if (error) throw error;
       }
     );
+    console.log(`Get new gmail of <${message.gmail_to}>`);
     res.sendStatus(200);
   } catch (err) {
     console.error("Error in handling Gmail API webhook:", err);
