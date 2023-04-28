@@ -281,17 +281,43 @@ setGmailAlarmAll();
 /*req.body는 refresh_token와 gmail를 키로 값을 받아야 함
 
   <예시 요청>
-  
+
   {
       "refresh_token" : "1//06YFehAQSadFeCgYIARAAGAYSNwF-L9IrXds4bzggDULlquQNpghqBc1mj4mzHJx3WSRMSNZC2mii4c7aUWx31Sf6qdeIDKQSUns",
       "gmail" : "baegyutae@togglecampus.com"
   }
 
 */
+// app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
+//   try {
+//     await setGmailAlarm(req.body);
+//     res.status(200).send({ status: "ok" });
+//   } catch (error) {
+//     console.error("Error while setting gmail alarm:", error);
+//     res.status(500).send(error);
+//   }
+// });
+
 app.post("/api/users/initialGmailAlarmSet", async (req, res) => {
   try {
-    await setGmailAlarm(req.body);
-    res.status(200).send({ status: "ok" });
+    const oAuth2Client = await getOAuth2Client(req.body.refreshToken);
+    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+    const request = {
+      labelIds: ["INBOX"],
+      topicName: "projects/bubble-gmail-383603/topics/GmailAPIPush",
+      userId: "me",
+    };
+
+    gmail.users.watch(request, (err) => {
+      if (err) {
+        console.error("Error while setting gmail alarm:", err);
+        res.status(500).send(err);
+      } else {
+        res.status(200).send({ status: "ok" });
+        console.log(`Set gmail alarm for ${req.body.userName}`);
+      }
+    });
   } catch (error) {
     console.error("Error while setting gmail alarm:", error);
     res.status(500).send(error);
