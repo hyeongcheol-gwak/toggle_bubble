@@ -310,57 +310,39 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
 //google cloud에서 특정 gmail_user의 메일함에 새로운 log가 발생할 시 해당 webhook을 실행함
 //해당 log가 새로운 메일에 의한 건지를 판단 후 새로운 메일일 경우 DB에 저장함
 app.post("/webhook/gmail", async (req, res) => {
-  try {
-    //log의 data 추출 및 디코딩
-    const base64EncodedString = req.body.message.data;
-    const buffer = Buffer.from(base64EncodedString, "base64");
-    const decodedString = buffer.toString("utf-8");
+  //log의 data 추출 및 디코딩
+  const base64EncodedString = req.body.message.data;
+  const buffer = Buffer.from(base64EncodedString, "base64");
+  const decodedString = buffer.toString("utf-8");
 
-    const req_message_data_decoded = JSON.parse(decodedString);
+  const req_message_data_decoded = JSON.parse(decodedString);
 
-    //log의 historyId 추출
-    const historyId = req_message_data_decoded.historyId;
+  //log의 historyId 추출
+  const historyId = req_message_data_decoded.historyId;
 
-    //mysql DB에서 가져올 값에 대한 변수 선언
-    let prevHistoryId = 0;
-    let refreshToken = "";
+  //mysql DB에서 가져올 값에 대한 변수 선언
+  let prevHistoryId = 0;
+  let refreshToken = "";
 
-    //prev_history_id 추출
-    try {
-      const results = await getGmailUser(req_message_data_decoded.emailAddress);
+  //prev_history_id 추출
+  const results = await getGmailUser(req_message_data_decoded.emailAddress);
 
-      //해당 유저의 정보가 없으면 API 종료
-      if (results.length === 0) {
-        res.status(404).send("User not found");
-        return;
-      }
+  //해당 유저의 정보가 없으면 API 종료
+  if (results.length === 0) {
+    res.status(404).send("User not found");
+    return;
+  }
 
-      //해당 유저의 정보가 있으면 위에서 선언한 mysql DB에서 가져올 값에 대한 변수에 저장
-      prevHistoryId = results[0].prev_history_id;
-      refreshToken = results[0].refresh_token;
-    } catch (error) {
-      console.error("Error retrieving user:", error);
-      res.status(500).send("Error retrieving user");
-      return;
-    }
+  //해당 유저의 정보가 있으면 위에서 선언한 mysql DB에서 가져올 값에 대한 변수에 저장
+  prevHistoryId = results[0].prev_history_id;
+  refreshToken = results[0].refresh_token;
 
-    //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
-    if (historyId > prevHistoryId) {
-      try {
-        await updateGmailUserPrevHistoryId(
-          req_message_data_decoded.emailAddress,
-          historyId
-        );
-      } catch (error) {
-        console.error("Error updating gmail_user_prev_history_id:", error);
-        res.status(500).send("Error updating gmail_user_prev_history_id");
-        return;
-      }
-    } else {
-      res.status(404).send("Not new email");
-      return;
-    }
-
+  //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
+  if (historyId > prevHistoryId) {
+    await updateGmailUserPrevHistoryId(
+      req_message_data_decoded.emailAddress,
+      historyId
+    );
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(refreshToken);
 
@@ -380,13 +362,89 @@ app.post("/webhook/gmail", async (req, res) => {
     );
     console.log(`Get new gmail of ${message.gmail_to}`);
     res.sendStatus(200);
-    return;
-  } catch (err) {
-    console.error("Error in handling Gmail API webhook:", err);
-    res.sendStatus(500);
+  } else {
+    res.status(404).send("Not new email");
     return;
   }
 });
+
+// app.post("/webhook/gmail", async (req, res) => {
+//   try {
+//     //log의 data 추출 및 디코딩
+//     const base64EncodedString = req.body.message.data;
+//     const buffer = Buffer.from(base64EncodedString, "base64");
+//     const decodedString = buffer.toString("utf-8");
+
+//     const req_message_data_decoded = JSON.parse(decodedString);
+
+//     //log의 historyId 추출
+//     const historyId = req_message_data_decoded.historyId;
+
+//     //mysql DB에서 가져올 값에 대한 변수 선언
+//     let prevHistoryId = 0;
+//     let refreshToken = "";
+
+//     //prev_history_id 추출
+//     try {
+//       const results = await getGmailUser(req_message_data_decoded.emailAddress);
+
+//       //해당 유저의 정보가 없으면 API 종료
+//       if (results.length === 0) {
+//         res.status(404).send("User not found");
+//         return;
+//       }
+
+//       //해당 유저의 정보가 있으면 위에서 선언한 mysql DB에서 가져올 값에 대한 변수에 저장
+//       prevHistoryId = results[0].prev_history_id;
+//       refreshToken = results[0].refresh_token;
+//     } catch (error) {
+//       console.error("Error retrieving user:", error);
+//       res.status(500).send("Error retrieving user");
+//       return;
+//     }
+
+//     //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
+//     if (historyId > prevHistoryId) {
+//       try {
+//         await updateGmailUserPrevHistoryId(
+//           req_message_data_decoded.emailAddress,
+//           historyId
+//         );
+//       } catch (error) {
+//         console.error("Error updating gmail_user_prev_history_id:", error);
+//         res.status(500).send("Error updating gmail_user_prev_history_id");
+//         return;
+//       }
+//     } else {
+//       res.status(404).send("Not new email");
+//       return;
+//     }
+
+//     //새로운 메일의 정보 추출
+//     const message = await getLatestGmail(refreshToken);
+
+//     //데이터 베이스에 저장
+//     connection.query(
+//       "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+//       [
+//         message.gmail_from,
+//         message.gmail_to,
+//         message.gmail_subject,
+//         message.gmail_content,
+//         message.gmail_content_summarized,
+//       ],
+//       function (error) {
+//         if (error) throw error;
+//       }
+//     );
+//     console.log(`Get new gmail of ${message.gmail_to}`);
+//     res.sendStatus(200);
+//   } catch (err) {
+//     console.error("Error in handling Gmail API webhook:", err);
+//     res.sendStatus(500);
+//     return;
+//   }
+// });
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
