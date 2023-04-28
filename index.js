@@ -332,6 +332,7 @@ app.post("/webhook/gmail", async (req, res) => {
       //해당 유저의 정보가 없으면 API 종료
       if (results.length === 0) {
         res.status(404).send("User not found");
+        return;
       }
 
       //해당 유저의 정보가 있으면 위에서 선언한 mysql DB에서 가져올 값에 대한 변수에 저장
@@ -340,6 +341,7 @@ app.post("/webhook/gmail", async (req, res) => {
     } catch (error) {
       console.error("Error retrieving user:", error);
       res.status(500).send("Error retrieving user");
+      return;
     }
 
     //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
@@ -352,9 +354,11 @@ app.post("/webhook/gmail", async (req, res) => {
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
         res.status(500).send("Error updating gmail_user_prev_history_id");
+        return;
       }
     } else {
       res.status(404).send("Not new email");
+      return;
     }
 
     //새로운 메일의 정보 추출
@@ -372,9 +376,9 @@ app.post("/webhook/gmail", async (req, res) => {
       ],
       function (error) {
         if (error) throw error;
-        console.log(`Get new gmail of <${message.gmail_to}>`);
       }
     );
+    if (message) console.log(`Get new gmail of <${message.gmail_to}>`);
     res.sendStatus(200);
   } catch (err) {
     console.error("Error in handling Gmail API webhook:", err);
