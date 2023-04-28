@@ -376,7 +376,6 @@ app.post("/webhook/gmail", async (req, res) => {
           .send("Error updating gmail_user_prev_history_id");
       }
     } else {
-      console.log("not new email");
       return res.status(404).send("Not new email");
     }
   } catch (err) {
