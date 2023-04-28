@@ -342,6 +342,10 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error getting gmail user");
     }
 
+    console.log(
+      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+    );
+
     //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신 && 새로운 메일이 아닐 경우 API 종료
     if (historyId > prevHistoryId) {
       try {
