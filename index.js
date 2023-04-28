@@ -342,13 +342,33 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error retrieving user");
     }
 
-    //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
+    //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
     if (historyId > prevHistoryId) {
       try {
         await updateGmailUserPrevHistoryId(
           req_message_data_decoded.emailAddress,
           historyId
         );
+
+        //새로운 메일의 정보 추출
+        const message = await getLatestGmail(refreshToken);
+
+        //데이터 베이스에 저장
+        connection.query(
+          "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+          [
+            message.gmail_from,
+            message.gmail_to,
+            message.gmail_subject,
+            message.gmail_content,
+            message.gmail_content_summarized,
+          ],
+          function (error) {
+            if (error) throw error;
+          }
+        );
+        if (message) console.log(`Get new gmail of <${message.gmail_to}>`);
+        res.sendStatus(200);
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
         return res
@@ -356,28 +376,9 @@ app.post("/webhook/gmail", async (req, res) => {
           .send("Error updating gmail_user_prev_history_id");
       }
     } else {
+      console.log("not new email");
       return res.status(404).send("Not new email");
     }
-
-    //새로운 메일의 정보 추출
-    const message = await getLatestGmail(refreshToken);
-
-    //데이터 베이스에 저장
-    connection.query(
-      "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
-      [
-        message.gmail_from,
-        message.gmail_to,
-        message.gmail_subject,
-        message.gmail_content,
-        message.gmail_content_summarized,
-      ],
-      function (error) {
-        if (error) throw error;
-      }
-    );
-    if (message) console.log(`Get new gmail of <${message.gmail_to}>`);
-    res.sendStatus(200);
   } catch (err) {
     console.error("Error in handling Gmail API webhook:", err);
     return res.sendStatus(500);
