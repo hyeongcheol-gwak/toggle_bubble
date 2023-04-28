@@ -354,20 +354,28 @@ app.post("/webhook/gmail", async (req, res) => {
         const message = await getLatestGmail(refreshToken);
 
         //데이터 베이스에 저장
-        connection.query(
-          "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
-          [
-            message.gmail_from,
-            message.gmail_to,
-            message.gmail_subject,
-            message.gmail_content,
-            message.gmail_content_summarized,
-          ],
-          function (error) {
-            if (error) throw error;
-            console.log(`Get new gmail of ${message.gmail_to}`);
-          }
-        );
+        if (
+          message.gmail_from &&
+          message.gmail_to &&
+          message.gmail_subject &&
+          message.gmail_content &&
+          message.gmail_content_summarized
+        ) {
+          connection.query(
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            [
+              message.gmail_from,
+              message.gmail_to,
+              message.gmail_subject,
+              message.gmail_content,
+              message.gmail_content_summarized,
+            ],
+            function (error) {
+              if (error) throw error;
+              console.log(`Get new gmail of ${message.gmail_to}`);
+            }
+          );
+        }
         return res.sendStatus(200);
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
