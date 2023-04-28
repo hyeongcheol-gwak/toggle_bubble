@@ -295,15 +295,15 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
     gmail.users.watch(request, (err) => {
       if (err) {
         console.error("Error while setting push notification:", err);
-        res.status(500).send(err);
+        return res.status(500).send(err);
       } else {
-        res.status(200).send({ status: "ok" });
         console.log(`Set gmail push notification of <${req.body.gmail}>`);
+        return res.status(200).send({ status: "ok" });
       }
     });
   } catch (error) {
     console.error("Error while setting gmail push notification:", error);
-    res.status(500).send(error);
+    return res.status(500).send(error);
   }
 });
 
@@ -365,9 +365,9 @@ app.post("/webhook/gmail", async (req, res) => {
           ],
           function (error) {
             if (error) throw error;
+            console.log(`Get new gmail of ${message.gmail_to}`);
           }
         );
-        console.log(`Get new gmail of ${message.gmail_to}`);
         return res.sendStatus(200);
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
