@@ -344,7 +344,7 @@ app.post("/webhook/gmail", async (req, res) => {
       return;
     }
 
-    //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
+    //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
     if (historyId > prevHistoryId) {
       try {
         await updateGmailUserPrevHistoryId(
@@ -376,15 +376,13 @@ app.post("/webhook/gmail", async (req, res) => {
       ],
       function (error) {
         if (error) throw error;
-        console.log(`Get new gmail of ${message.gmail_to}`);
       }
     );
+    console.log(`Get new gmail of ${message.gmail_to}`);
     res.sendStatus(200);
-    return;
   } catch (err) {
     console.error("Error in handling Gmail API webhook:", err);
     res.sendStatus(500);
-    return;
   }
 });
 
