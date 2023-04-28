@@ -344,6 +344,12 @@ app.post("/webhook/gmail", async (req, res) => {
       return;
     }
 
+    console.log(
+      req_message_data_decoded.emailAddress,
+      historyId,
+      prevHistoryId
+    );
+
     //새로운 메일이 아닐 경우, 즉 (historyId > prevHistoryId)일 경우 API 종료 && 새로운 메일일 경우 해당 유저의 prev_history_id 갱신
     if (historyId > prevHistoryId) {
       try {
