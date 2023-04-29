@@ -493,7 +493,7 @@ app.post("/webhook/gmail", async (req, res) => {
               "\x1b[31m%s\x1b[0m",
               `Get duplicated gmail of ${message.gmail_to}`
             );
-            return res.sendStatus(409);
+            return;
           }
         }
       );
