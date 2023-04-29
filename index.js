@@ -266,6 +266,7 @@ async function setGmailAlarm(gmail_user) {
     const oAuth2Client = await getOAuth2Client(RefreshToken);
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
+    //이유는 모르겠으나, "UNREAD"는 반드시 있어야 함
     const request = {
       labelIds: [
         "CATEGORY_PERSONAL",
@@ -328,11 +329,13 @@ async function setGmailAlarmAll() {
 setGmailAlarmAll();
 
 //bubble.io에서 새로운 gmail_user가 가입시 처음부터 Push Notification을 설정하기 위함
+//이유는 모르겠으나, setGmailAlarm()으로 해당 API를 구현할 시 버블에서는 오류가 발생함
 app.post("/api/gmail/pushNotificationSet", async (req, res) => {
   try {
     const oAuth2Client = await getOAuth2Client(req.body.refreshToken);
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
+    //이유는 모르겠으나, "UNREAD"는 반드시 있어야 함
     const request = {
       labelIds: [
         "CATEGORY_PERSONAL",
@@ -396,10 +399,10 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error getting gmail user");
     }
 
-    //webhook을 호출하는 모든 log 확인
-    console.log(
-      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-    );
+    // //webhook을 호출하는 모든 log 확인
+    // console.log(
+    //   `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+    // );
 
     //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신
     //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 API를 종료하면 안됨
