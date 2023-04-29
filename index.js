@@ -496,6 +496,10 @@ app.post("/webhook/gmail", async (req, res) => {
         //   );
         // }
 
+        if (req_message_data_decoded.emailAddress == message.gmail_from) {
+          return res.sendStatus(200);
+        }
+
         //새로운 메일 데이터의 경우 DB에 저장
         if (
           message.gmail_from &&
