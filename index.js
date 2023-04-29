@@ -338,16 +338,18 @@ setGmailAlarmAll();
 
 // // Run the script
 // (async () => {
-//   //let historyId = 934402;
-//   //await getHistory(
-//   //  "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI",
-//   //  historyId
-//   //);
-//   let messageId = "187cab1e3bdf8345";
+//   let historyId = 934495;
+
 //   const gmail = await getGmailClient(
 //     "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI"
 //   );
-//   await getMessage(gmail, messageId);
+//   await getHistory(gmail, historyId);
+
+//   // let messageId = "187cab1e3bdf8345";
+//   // const gmail = await getGmailClient(
+//   //   "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI"
+//   // );
+//   // await getMessage(gmail, messageId);
 // })();
 
 //bubble.io에서 새로운 gmail_user가 가입시 처음부터 Push Notification을 설정하기 위함
@@ -444,7 +446,7 @@ app.post("/webhook/gmail", async (req, res) => {
 
     const gmail = await getGmailClient(refreshToken);
 
-    const data = await getGmailHistory(gmail, historyId);
+    const data = await getGmailHistory(gmail, prevHistoryId);
 
     const messagesAdded = data.history[0].messagesAdded;
 
