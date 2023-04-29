@@ -471,33 +471,33 @@ app.post("/webhook/gmail", async (req, res) => {
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(gmail);
 
-    //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
-    if (
-      message.gmail_from &&
-      message.gmail_to &&
-      message.gmail_subject &&
-      message.gmail_content
-    ) {
-      connection.query(
-        "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
-        [
-          message.gmail_from,
-          message.gmail_to,
-          message.gmail_subject,
-          message.gmail_content,
-        ],
-        function (error, results) {
-          if (error) throw error;
-          if (results.length > 0) {
-            console.log(
-              "\x1b[31m%s\x1b[0m",
-              `Get duplicated gmail of ${message.gmail_to}`
-            );
-            return;
-          }
-        }
-      );
-    }
+    // //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
+    // if (
+    //   message.gmail_from &&
+    //   message.gmail_to &&
+    //   message.gmail_subject &&
+    //   message.gmail_content
+    // ) {
+    //   connection.query(
+    //     "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
+    //     [
+    //       message.gmail_from,
+    //       message.gmail_to,
+    //       message.gmail_subject,
+    //       message.gmail_content,
+    //     ],
+    //     function (error, results) {
+    //       if (error) throw error;
+    //       if (results.length > 0) {
+    //         console.log(
+    //           "\x1b[31m%s\x1b[0m",
+    //           `Get duplicated gmail of ${message.gmail_to}`
+    //         );
+    //         return;
+    //       }
+    //     }
+    //   );
+    // }
 
     //새로운 메일 데이터의 경우 DB에 저장
     if (
