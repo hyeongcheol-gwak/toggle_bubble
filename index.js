@@ -26,14 +26,6 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-//mySql DB 연결
-const connection = mysql.createConnection({
-  host: config.MYSQLHOST,
-  user: config.MYSQLUSER,
-  password: config.MYSQLPASSWORD,
-  database: config.MYSQLDATABASE,
-});
-
 //mySql DB 연결 과정이 성공했는지 실패했는지 console 창에 출력
 connection.connect(function (err) {
   if (err) {
