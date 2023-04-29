@@ -429,80 +429,80 @@ app.post("/webhook/gmail", async (req, res) => {
 
     const gmail = await getGmailClient(refreshToken);
 
-    // //수신한 메일의 경우 messagesAdded가 존재함
-    // //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
-    // const prevData = await getGmailHistory(gmail, prevHistoryId);
-    // const data = await getGmailHistory(gmail, historyId);
+    //수신한 메일의 경우 messagesAdded가 존재함
+    //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
+    const prevData = await getGmailHistory(gmail, prevHistoryId);
+    const data = await getGmailHistory(gmail, historyId);
 
-    // let messagesAdded = null;
+    let messagesAdded = null;
 
-    // if (prevData.history && prevData.history[0].messagesAdded) {
-    //   messagesAdded = prevData.history[0].messagesAdded;
-    // } else if (data.history && data.history[0].messagesAdded) {
-    //   messagesAdded = data.history[0].messagesAdded;
-    // } else {
-    //   return res.status(404);
-    // }
+    if (prevData.history && prevData.history[0].messagesAdded) {
+      messagesAdded = prevData.history[0].messagesAdded;
+    } else if (data.history && data.history[0].messagesAdded) {
+      messagesAdded = data.history[0].messagesAdded;
+    } else {
+      return res.status(404);
+    }
 
-    // //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
-    // const hasPersonalCategory = messagesAdded.some(({ message }) =>
-    //   message.labelIds.includes("CATEGORY_PERSONAL")
-    // );
+    //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
+    const hasPersonalCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_PERSONAL")
+    );
 
-    // const hasSocialCategory = messagesAdded.some(({ message }) =>
-    //   message.labelIds.includes("CATEGORY_SOCIAL")
-    // );
+    const hasSocialCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_SOCIAL")
+    );
 
-    // const hasPromotionsCategory = messagesAdded.some(({ message }) =>
-    //   message.labelIds.includes("CATEGORY_PROMOTIONS")
-    // );
-    // const hasUpdatesCategory = messagesAdded.some(({ message }) =>
-    //   message.labelIds.includes("CATEGORY_UPDATES")
-    // );
-    // const hasForumsCategory = messagesAdded.some(({ message }) =>
-    //   message.labelIds.includes("CATEGORY_FORUMS")
-    // );
+    const hasPromotionsCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_PROMOTIONS")
+    );
+    const hasUpdatesCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_UPDATES")
+    );
+    const hasForumsCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_FORUMS")
+    );
 
-    // if (
-    //   !hasPersonalCategory &&
-    //   !hasSocialCategory &&
-    //   !hasPromotionsCategory &&
-    //   !hasUpdatesCategory &&
-    //   !hasForumsCategory
-    // ) {
-    //   return res.status(404);
-    // }
+    if (
+      !hasPersonalCategory &&
+      !hasSocialCategory &&
+      !hasPromotionsCategory &&
+      !hasUpdatesCategory &&
+      !hasForumsCategory
+    ) {
+      return res.status(404);
+    }
 
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(gmail);
 
-    //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
-    if (
-      message.gmail_from &&
-      message.gmail_to &&
-      message.gmail_subject &&
-      message.gmail_content
-    ) {
-      connection.query(
-        "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
-        [
-          message.gmail_from,
-          message.gmail_to,
-          message.gmail_subject,
-          message.gmail_content,
-        ],
-        function (error, results) {
-          if (error) throw error;
-          if (results.length > 0) {
-            console.log(
-              "\x1b[31m%s\x1b[0m",
-              `Get duplicated gmail of ${message.gmail_to}`
-            );
-            return;
-          }
-        }
-      );
-    }
+    // //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
+    // if (
+    //   message.gmail_from &&
+    //   message.gmail_to &&
+    //   message.gmail_subject &&
+    //   message.gmail_content
+    // ) {
+    //   connection.query(
+    //     "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
+    //     [
+    //       message.gmail_from,
+    //       message.gmail_to,
+    //       message.gmail_subject,
+    //       message.gmail_content,
+    //     ],
+    //     function (error, results) {
+    //       if (error) throw error;
+    //       if (results.length > 0) {
+    //         console.log(
+    //           "\x1b[31m%s\x1b[0m",
+    //           `Get duplicated gmail of ${message.gmail_to}`
+    //         );
+    //         return;
+    //       }
+    //     }
+    //   );
+    // }
 
     //새로운 메일 데이터의 경우 DB에 저장
     if (
