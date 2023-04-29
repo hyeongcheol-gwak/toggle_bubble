@@ -415,10 +415,11 @@ app.post("/webhook/gmail", async (req, res) => {
           .status(500)
           .send("Error updating gmail_user_prev_history_id");
       }
-    } else {
-      //새로운 메일이 아닐 경우 API 종료
-      return res.status(404);
     }
+    // else {
+    //   //새로운 메일이 아닐 경우 API 종료
+    //   return res.status(404);
+    // }
 
     //webhook을 호출하는 유의미한 log 확인
     console.log(
