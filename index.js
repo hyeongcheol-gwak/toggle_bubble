@@ -494,7 +494,10 @@ app.post("/webhook/gmail", async (req, res) => {
         ],
         function (error) {
           if (error) throw error;
-          console.log(`Get new gmail of ${message.gmail_to}`);
+          console.log(
+            "\x1b[32m%s\x1b[0m",
+            `Get new gmail of ${message.gmail_to}`
+          );
         }
       );
     }
