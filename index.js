@@ -233,7 +233,14 @@ async function setGmailAlarm(gmail_user) {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const request = {
-      labelIds: ["INBOX", "UNREAD"],
+      labelIds: [
+        "CATEGORY_PERSONAL",
+        "CATEGORY_SOCIAL",
+        "CATEGORY_PROMOTIONS",
+        "CATEGORY_UPDATES",
+        "CATEGORY_FORUMS",
+        "UNREAD",
+      ],
       topicName: "projects/bubble-gmail-383603/topics/gmail_push_noti",
       userId: "me",
     };
@@ -287,7 +294,14 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const request = {
-      labelIds: ["INBOX", "UNREAD"],
+      labelIds: [
+        "CATEGORY_PERSONAL",
+        "CATEGORY_SOCIAL",
+        "CATEGORY_PROMOTIONS",
+        "CATEGORY_UPDATES",
+        "CATEGORY_FORUMS",
+        "UNREAD",
+      ],
       topicName: "projects/bubble-gmail-383603/topics/gmail_push_noti",
       userId: "me",
     };
