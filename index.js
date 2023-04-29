@@ -495,8 +495,9 @@ app.post("/webhook/gmail", async (req, res) => {
         //     }
         //   );
         // }
+        const email = message.gmail_from.replace(/.*<(.*)>/, "$1");
 
-        if (req_message_data_decoded.emailAddress == message.gmail_from) {
+        if (req_message_data_decoded.emailAddress == email) {
           return res.sendStatus(200);
         }
 
