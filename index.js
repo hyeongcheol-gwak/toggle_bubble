@@ -444,34 +444,34 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(404);
     }
 
-    //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
-    const hasPersonalCategory = messagesAdded.some(({ message }) =>
-      message.labelIds.includes("CATEGORY_PERSONAL")
-    );
+    // //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
+    // const hasPersonalCategory = messagesAdded.some(({ message }) =>
+    //   message.labelIds.includes("CATEGORY_PERSONAL")
+    // );
 
-    const hasSocialCategory = messagesAdded.some(({ message }) =>
-      message.labelIds.includes("CATEGORY_SOCIAL")
-    );
+    // const hasSocialCategory = messagesAdded.some(({ message }) =>
+    //   message.labelIds.includes("CATEGORY_SOCIAL")
+    // );
 
-    const hasPromotionsCategory = messagesAdded.some(({ message }) =>
-      message.labelIds.includes("CATEGORY_PROMOTIONS")
-    );
-    const hasUpdatesCategory = messagesAdded.some(({ message }) =>
-      message.labelIds.includes("CATEGORY_UPDATES")
-    );
-    const hasForumsCategory = messagesAdded.some(({ message }) =>
-      message.labelIds.includes("CATEGORY_FORUMS")
-    );
+    // const hasPromotionsCategory = messagesAdded.some(({ message }) =>
+    //   message.labelIds.includes("CATEGORY_PROMOTIONS")
+    // );
+    // const hasUpdatesCategory = messagesAdded.some(({ message }) =>
+    //   message.labelIds.includes("CATEGORY_UPDATES")
+    // );
+    // const hasForumsCategory = messagesAdded.some(({ message }) =>
+    //   message.labelIds.includes("CATEGORY_FORUMS")
+    // );
 
-    if (
-      !hasPersonalCategory &&
-      !hasSocialCategory &&
-      !hasPromotionsCategory &&
-      !hasUpdatesCategory &&
-      !hasForumsCategory
-    ) {
-      return res.status(404);
-    }
+    // if (
+    //   !hasPersonalCategory &&
+    //   !hasSocialCategory &&
+    //   !hasPromotionsCategory &&
+    //   !hasUpdatesCategory &&
+    //   !hasForumsCategory
+    // ) {
+    //   return res.status(404);
+    // }
 
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(gmail);
