@@ -1,5 +1,6 @@
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
+const chalk = require("chalk");
 
 const express = require("express");
 
@@ -67,6 +68,11 @@ async function getOAuth2Client(refreshToken) {
   }
 }
 
+/**
+ * gmail_refresh_token을 통해 gmailClient를 생성하는 함수
+ * @param {string} refreshToken
+ * @returns gmailClient
+ */
 async function getGmailClient(refreshToken) {
   try {
     const oAuth2Client = new OAuth2Client(
@@ -313,45 +319,6 @@ async function setGmailAlarmAll() {
 
 setGmailAlarmAll();
 
-// // Function to log the data object to the console
-// function logCompleteJsonObject(jsonObject) {
-//   console.log(JSON.stringify(jsonObject, null, 4));
-// }
-// // Get history details based on history ID
-// async function getHistory(gmail, historyId) {
-//   const res = await gmail.users.history.list({
-//     userId: "me",
-//     startHistoryId: historyId,
-//   });
-//   // The main part of the response comes
-//   // in the "data" attribute.
-//   logCompleteJsonObject(res.data);
-// }
-
-// async function getMessage(gmail, messageId) {
-//   const res = await gmail.users.messages.get({
-//     userId: "me",
-//     id: messageId,
-//   });
-//   logCompleteJsonObject(res.data);
-// }
-
-// // Run the script
-// (async () => {
-//   let historyId = 934495;
-
-//   const gmail = await getGmailClient(
-//     "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI"
-//   );
-//   await getHistory(gmail, historyId);
-
-//   // let messageId = "187cab1e3bdf8345";
-//   // const gmail = await getGmailClient(
-//   //   "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI"
-//   // );
-//   // await getMessage(gmail, messageId);
-// })();
-
 //bubble.io에서 새로운 gmail_user가 가입시 처음부터 Push Notification을 설정하기 위함
 app.post("/api/gmail/pushNotificationSet", async (req, res) => {
   try {
@@ -421,6 +388,7 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error getting gmail user");
     }
 
+    //webhook을 호출하는 모든 log 확인
     console.log(
       `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
     );
@@ -444,12 +412,22 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(404);
     }
 
+    //webhook을 호출하는 유의미한 log 확인
+    console.log(
+      chalk.yellow(
+        `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+      )
+    );
+
     const gmail = await getGmailClient(refreshToken);
 
+    //HistoryId가 아닌 prevHistoryId를 사용하는 이유는 무척 복잡하니 생략
     const data = await getGmailHistory(gmail, prevHistoryId);
 
     const messagesAdded = data.history[0].messagesAdded;
 
+    //새로 받은 메일의 경우는 messagesAdded가 존재함
+    //이메일 임시보관함에 생성된 메일이 DB에 저장되는 것을 방지
     if (!messagesAdded) {
       return res.status(404);
     }
@@ -472,6 +450,7 @@ app.post("/webhook/gmail", async (req, res) => {
       message.labelIds.includes("CATEGORY_FORUMS")
     );
 
+    //특정 카테고리의 메일함에 들어 온 메일만 확인
     if (
       !hasPersonalCategory &&
       !hasSocialCategory &&
