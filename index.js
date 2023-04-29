@@ -472,6 +472,33 @@ app.post("/webhook/gmail", async (req, res) => {
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(gmail);
 
+    if (
+      message.gmail_from &&
+      message.gmail_to &&
+      message.gmail_subject &&
+      message.gmail_content
+    ) {
+      connection.query(
+        "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
+        [
+          message.gmail_from,
+          message.gmail_to,
+          message.gmail_subject,
+          message.gmail_content,
+        ],
+        function (error, results) {
+          if (error) throw error;
+          if (results.length > 0) {
+            console.log(
+              "\x1b[33m%s\x1b[0m",
+              `Duplicate gmail of ${message.gmail_to}`
+            );
+            return res.sendStatus(409);
+          }
+        }
+      );
+    }
+
     //데이터 베이스에 저장
     if (
       message.gmail_from &&
