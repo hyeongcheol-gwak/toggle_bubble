@@ -431,12 +431,15 @@ app.post("/webhook/gmail", async (req, res) => {
     const prevData = await getGmailHistory(gmail, prevHistoryId);
     const data = await getGmailHistory(gmail, historyId);
 
-    const messagesAdded =
-      data.history[0].messagesAdded || prevData.history[0].messagesAdded;
+    let messagesAdded = null;
 
-    //새로 받은 메일의 경우는 messagesAdded가 존재함
-    //이메일 임시보관함에 생성된 메일이 DB에 저장되는 것을 방지
-    if (!messagesAdded) {
+    if (prevData.history[0] && prevData.history[0].messagesAdded) {
+      messagesAdded = prevData.history[0].messagesAdded;
+    } else if (data.history[0] && data.history[0].messagesAdded) {
+      messagesAdded = data.history[0].messagesAdded;
+    } else {
+      //새로 받은 메일의 경우는 messagesAdded가 존재함
+      //이메일 임시보관함에 생성된 메일이 DB에 저장되는 것을 방지
       return res.status(404);
     }
 
