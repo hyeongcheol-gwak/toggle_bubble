@@ -26,18 +26,6 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-//mySql DB 연결 과정이 성공했는지 실패했는지 console 창에 출력
-connection.connect(function (err) {
-  if (err) {
-    console.error("Error connecting to database: ", err);
-    return;
-  }
-  console.log(
-    "\x1b[32m%s\x1b[0m",
-    "Database connection established successfully"
-  );
-});
-
 /**
  * gmail_refresh_token을 통해 oAuth2Client를 생성하는 함수
  * @param {string} refreshToken
