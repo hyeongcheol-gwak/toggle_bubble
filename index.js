@@ -40,7 +40,10 @@ connection.connect(function (err) {
     console.error("Error connecting to database: ", err);
     return;
   }
-  console.log("Database connection established successfully");
+  console.log(
+    "\x1b[32m%s\x1b[0m",
+    "Database connection established successfully"
+  );
 });
 
 /**
@@ -297,8 +300,6 @@ async function setGmailAlarm(gmail_user) {
  */
 async function setGmailAlarmAll() {
   try {
-    console.log(`Start setting gmail push notification of all gmail users`);
-
     const gmail_users = await getGmailUserAll();
 
     gmail_users.forEach((gmail_user) => {
@@ -306,6 +307,11 @@ async function setGmailAlarmAll() {
         setGmailAlarm(gmail_user);
       }
     });
+
+    console.log(
+      "\x1b[34m%s\x1b[0m",
+      `Start setting gmail push notification of all gmail users`
+    );
 
     setTimeout(() => {
       run();
@@ -422,10 +428,11 @@ app.post("/webhook/gmail", async (req, res) => {
 
     const gmail = await getGmailClient(refreshToken);
 
-    //HistoryId가 아닌 prevHistoryId를 사용하는 이유는 무척 복잡하니 생략
-    const data = await getGmailHistory(gmail, prevHistoryId);
+    const prevData = await getGmailHistory(gmail, prevHistoryId);
+    const data = await getGmailHistory(gmail, historyId);
 
-    const messagesAdded = data.history[0].messagesAdded;
+    const messagesAdded =
+      data.history[0].messagesAdded || prevData.history[0].messagesAdded;
 
     //새로 받은 메일의 경우는 messagesAdded가 존재함
     //이메일 임시보관함에 생성된 메일이 DB에 저장되는 것을 방지
@@ -496,5 +503,5 @@ app.post("/webhook/gmail", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log("\x1b[32m%s\x1b[0m", `Server listening on port ${port}`);
 });
