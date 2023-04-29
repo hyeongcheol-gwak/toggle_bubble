@@ -408,6 +408,12 @@ app.post("/webhook/gmail", async (req, res) => {
           req_message_data_decoded.emailAddress,
           historyId
         );
+
+        //webhook을 호출하는 유의미한 log 확인
+        console.log(
+          "\x1b[33m%s\x1b[0m",
+          `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+        );
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
 
@@ -416,16 +422,6 @@ app.post("/webhook/gmail", async (req, res) => {
           .send("Error updating gmail_user_prev_history_id");
       }
     }
-    // else {
-    //   //새로운 메일이 아닐 경우 API 종료
-    //   return res.status(404);
-    // }
-
-    //webhook을 호출하는 유의미한 log 확인
-    console.log(
-      "\x1b[33m%s\x1b[0m",
-      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-    );
 
     const gmail = await getGmailClient(refreshToken);
 
