@@ -1,6 +1,5 @@
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
-const kleur = require("kleur");
 
 const express = require("express");
 
@@ -281,7 +280,10 @@ async function setGmailAlarm(gmail_user) {
       if (err) {
         console.error("Error while setting gmail push notification:", err);
       } else {
-        console.log(`Set gmail push notification of <${gmail_user.gmail}>`);
+        console.log(
+          "\x1b[33m%s\x1b[0m",
+          `Set gmail push notification of <${gmail_user.gmail}>`
+        );
       }
     });
   } catch (error) {
@@ -414,9 +416,8 @@ app.post("/webhook/gmail", async (req, res) => {
 
     //webhook을 호출하는 유의미한 log 확인
     console.log(
-      kleur.yellow(
-        `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-      )
+      "\x1b[33m%s\x1b[0m",
+      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
     );
 
     const gmail = await getGmailClient(refreshToken);
