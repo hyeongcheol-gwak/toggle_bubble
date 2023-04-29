@@ -441,7 +441,7 @@ app.post("/webhook/gmail", async (req, res) => {
     } else if (data.history && data.history[0].messagesAdded) {
       messagesAdded = data.history[0].messagesAdded;
     } else {
-      return;
+      return res.status(404);
     }
 
     //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
@@ -470,7 +470,7 @@ app.post("/webhook/gmail", async (req, res) => {
       !hasUpdatesCategory &&
       !hasForumsCategory
     ) {
-      return;
+      return res.status(404);
     }
 
     //새로운 메일의 정보 추출
