@@ -241,7 +241,7 @@ async function setGmailAlarm(gmail_user) {
         "CATEGORY_FORUMS",
         "UNREAD",
       ],
-      topicName: "projects/bubble-gmail-383603/topics/gmail_push_noti",
+      topicName: "projects/bubble-gmail-383603/topics/gmail_push",
       userId: "me",
     };
 
@@ -287,6 +287,31 @@ async function setGmailAlarmAll() {
 
 setGmailAlarmAll();
 
+// // Function to log the data object to the console
+// function logCompleteJsonObject(jsonObject) {
+//   console.log(JSON.stringify(jsonObject, null, 4));
+// }
+// // Get history details based on history ID
+// async function getHistory(refreshToken, historyId) {
+//   const oAuth2Client = await getOAuth2Client(refreshToken);
+//   const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+//   const res = await gmail.users.history.list({
+//     userId: "me",
+//     startHistoryId: historyId,
+//   });
+//   // The main part of the response comes
+//   // in the "data" attribute.
+//   logCompleteJsonObject(res.data);
+// }
+// // Run the script
+// (async () => {
+//   let historyId = 281549;
+//   await getHistory(
+//     "1//06hlpUzm-s8FJCgYIARAAGAYSNwF-L9IrZJIx3zFLSuondkctq6uiqYZXrrU0WfU4vci7k3NmqyKnd-AEliv_Vx0kEMaGvqNExV0",
+//     historyId
+//   );
+// })();
+
 //bubble.io에서 새로운 gmail_user가 가입시 처음부터 Push Notification을 설정하기 위함
 app.post("/api/gmail/pushNotificationSet", async (req, res) => {
   try {
@@ -302,7 +327,7 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
         "CATEGORY_FORUMS",
         "UNREAD",
       ],
-      topicName: "projects/bubble-gmail-383603/topics/gmail_push_noti",
+      topicName: "projects/bubble-gmail-383603/topics/gmail_push",
       userId: "me",
     };
 
