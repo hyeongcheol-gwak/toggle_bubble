@@ -394,10 +394,10 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error getting gmail user");
     }
 
-    // //webhook을 호출하는 모든 log 확인
-    // console.log(
-    //   `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-    // );
+    //webhook을 호출하는 모든 log 확인
+    console.log(
+      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+    );
 
     //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신
     //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 API를 종료하면 안됨
@@ -436,7 +436,7 @@ app.post("/webhook/gmail", async (req, res) => {
     } else if (data.history && data.history[0].messagesAdded) {
       messagesAdded = data.history[0].messagesAdded;
     } else {
-      return res.status(404);
+      return;
     }
 
     //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
@@ -465,7 +465,7 @@ app.post("/webhook/gmail", async (req, res) => {
       !hasUpdatesCategory &&
       !hasForumsCategory
     ) {
-      return res.status(404);
+      return;
     }
 
     //새로운 메일의 정보 추출
