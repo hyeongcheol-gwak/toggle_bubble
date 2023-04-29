@@ -433,9 +433,9 @@ app.post("/webhook/gmail", async (req, res) => {
 
     let messagesAdded = null;
 
-    if (prevData.history[0] && prevData.history[0].messagesAdded) {
+    if (prevData.history && prevData.history[0].messagesAdded) {
       messagesAdded = prevData.history[0].messagesAdded;
-    } else if (data.history[0] && data.history[0].messagesAdded) {
+    } else if (data.history && data.history[0].messagesAdded) {
       messagesAdded = data.history[0].messagesAdded;
     } else {
       //새로 받은 메일의 경우는 messagesAdded가 존재함
