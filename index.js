@@ -412,12 +412,12 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(404);
     }
 
-    //webhook을 호출하는 유의미한 log 확인
-    console.log(
-      chalk.yellow(
-        `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-      )
-    );
+    // //webhook을 호출하는 유의미한 log 확인
+    // console.log(
+    //   chalk.yellow(
+    //     `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+    //   )
+    // );
 
     const gmail = await getGmailClient(refreshToken);
 
