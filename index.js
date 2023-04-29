@@ -203,6 +203,14 @@ async function getLatestGmail(gmail) {
  * @returns 특정 gmail_user
  */
 async function getGmailUser(gmail) {
+  //mySql DB 연결
+  const connection = mysql.createConnection({
+    host: config.MYSQLHOST,
+    user: config.MYSQLUSER,
+    password: config.MYSQLPASSWORD,
+    database: config.MYSQLDATABASE,
+  });
+
   return new Promise((resolve, reject) => {
     connection.query(
       "SELECT * FROM `gmail_user` WHERE `gmail` = ?",
@@ -215,6 +223,7 @@ async function getGmailUser(gmail) {
         }
       }
     );
+    connection.end();
   });
 }
 
@@ -223,6 +232,14 @@ async function getGmailUser(gmail) {
  * @returns 모든 gmail_user
  */
 async function getGmailUserAll() {
+  //mySql DB 연결
+  const connection = mysql.createConnection({
+    host: config.MYSQLHOST,
+    user: config.MYSQLUSER,
+    password: config.MYSQLPASSWORD,
+    database: config.MYSQLDATABASE,
+  });
+
   return new Promise((resolve, reject) => {
     connection.query("SELECT * FROM `gmail_user`", function (error, results) {
       if (error) {
@@ -231,6 +248,7 @@ async function getGmailUserAll() {
         resolve(results);
       }
     });
+    connection.end();
   });
 }
 
@@ -241,6 +259,14 @@ async function getGmailUserAll() {
  * @returns
  */
 async function updateGmailUserPrevHistoryId(gmail, historyId) {
+  //mySql DB 연결
+  const connection = mysql.createConnection({
+    host: config.MYSQLHOST,
+    user: config.MYSQLUSER,
+    password: config.MYSQLPASSWORD,
+    database: config.MYSQLDATABASE,
+  });
+
   return new Promise((resolve, reject) => {
     connection.query(
       "UPDATE `gmail_user` SET `prev_history_id` = ? WHERE `gmail` = ?",
@@ -253,6 +279,7 @@ async function updateGmailUserPrevHistoryId(gmail, historyId) {
         }
       }
     );
+    connection.end();
   });
 }
 
@@ -495,11 +522,19 @@ app.post("/webhook/gmail", async (req, res) => {
         //     }
         //   );
         // }
-        const email = message.gmail_from.replace(/.*<(.*)>/, "$1");
+        const gmailFrom_ = message.gmail_from.replace(/.*<(.*)>/, "$1");
 
-        if (req_message_data_decoded.emailAddress == email) {
+        if (req_message_data_decoded.emailAddress == gmailFrom_) {
           return res.sendStatus(200);
         }
+
+        //mySql DB 연결
+        const connection = mysql.createConnection({
+          host: config.MYSQLHOST,
+          user: config.MYSQLUSER,
+          password: config.MYSQLPASSWORD,
+          database: config.MYSQLDATABASE,
+        });
 
         //새로운 메일 데이터의 경우 DB에 저장
         if (
@@ -527,6 +562,7 @@ app.post("/webhook/gmail", async (req, res) => {
             }
           );
         }
+        connection.end();
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
         return res
