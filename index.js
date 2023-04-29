@@ -67,6 +67,27 @@ async function getOAuth2Client(refreshToken) {
   }
 }
 
+async function getGmailClient(refreshToken) {
+  try {
+    const oAuth2Client = new OAuth2Client(
+      CLIENT_ID,
+      CLIENT_SECRET,
+      REDIRECT_URI
+    );
+
+    oAuth2Client.setCredentials({
+      refresh_token: refreshToken,
+    });
+
+    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+    return gmail;
+  } catch (error) {
+    console.error("Error while getting google gmail client:", error);
+    throw error;
+  }
+}
+
 /**
  * text를 openAi를 통해 요약해서 반환하는 함수
  * @param {string} text
@@ -85,15 +106,20 @@ async function summarizeText(text) {
   return summary;
 }
 
+async function getGmailHistory(gmail, historyId) {
+  const res = await gmail.users.history.list({
+    userId: "me",
+    startHistoryId: historyId,
+  });
+  return res.data;
+}
+
 /**
  * gmail_refresh_token을 통해 유저의 가장 최신 gmail을 추출하고 해당 gmail에서 DB 저장에 필요한 정보를 필터링하여 결과로 반환하는 함수
  * @param {string} refreshToken
  * @returns gmail_from, gmail_to, gmail_subject, gmail_content_summarized, gmail_content,
  */
-async function getLatestGmail(refreshToken) {
-  const oAuth2Client = await getOAuth2Client(refreshToken);
-  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
-
+async function getLatestGmail(gmail) {
   //user의 가장 최신 gmail을 추출
   const response_st = await gmail.users.messages.list({
     userId: "me",
@@ -292,9 +318,7 @@ setGmailAlarmAll();
 //   console.log(JSON.stringify(jsonObject, null, 4));
 // }
 // // Get history details based on history ID
-// async function getHistory(refreshToken, historyId) {
-//   const oAuth2Client = await getOAuth2Client(refreshToken);
-//   const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+// async function getHistory(gmail, historyId) {
 //   const res = await gmail.users.history.list({
 //     userId: "me",
 //     startHistoryId: historyId,
@@ -303,13 +327,27 @@ setGmailAlarmAll();
 //   // in the "data" attribute.
 //   logCompleteJsonObject(res.data);
 // }
+
+// async function getMessage(gmail, messageId) {
+//   const res = await gmail.users.messages.get({
+//     userId: "me",
+//     id: messageId,
+//   });
+//   logCompleteJsonObject(res.data);
+// }
+
 // // Run the script
 // (async () => {
-//   let historyId = 281549;
-//   await getHistory(
-//     "1//06hlpUzm-s8FJCgYIARAAGAYSNwF-L9IrZJIx3zFLSuondkctq6uiqYZXrrU0WfU4vci7k3NmqyKnd-AEliv_Vx0kEMaGvqNExV0",
-//     historyId
+//   //let historyId = 934402;
+//   //await getHistory(
+//   //  "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI",
+//   //  historyId
+//   //);
+//   let messageId = "187cab1e3bdf8345";
+//   const gmail = await getGmailClient(
+//     "1//067r6F9BjRgbYCgYIARAAGAYSNwF-L9IrhmnBFWRgc8hpKMUfQfld7gvr24boGoXecR7WcadDDRADnmFio7T0eWCXhJei0_Y_7lI"
 //   );
+//   await getMessage(gmail, messageId);
 // })();
 
 //bubble.io에서 새로운 gmail_user가 가입시 처음부터 Push Notification을 설정하기 위함
@@ -392,36 +430,9 @@ app.post("/webhook/gmail", async (req, res) => {
           req_message_data_decoded.emailAddress,
           historyId
         );
-
-        //새로운 메일의 정보 추출
-        const message = await getLatestGmail(refreshToken);
-
-        //데이터 베이스에 저장
-        if (
-          message.gmail_from &&
-          message.gmail_to &&
-          message.gmail_subject &&
-          message.gmail_content &&
-          message.gmail_content_summarized
-        ) {
-          connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
-            [
-              message.gmail_from,
-              message.gmail_to,
-              message.gmail_subject,
-              message.gmail_content,
-              message.gmail_content_summarized,
-            ],
-            function (error) {
-              if (error) throw error;
-              console.log(`Get new gmail of ${message.gmail_to}`);
-            }
-          );
-        }
-        return res.sendStatus(200);
       } catch (error) {
         console.error("Error updating gmail_user_prev_history_id:", error);
+
         return res
           .status(500)
           .send("Error updating gmail_user_prev_history_id");
@@ -430,6 +441,72 @@ app.post("/webhook/gmail", async (req, res) => {
       //새로운 메일이 아닐 경우 API 종료
       return res.status(404);
     }
+
+    const gmail = await getGmailClient(refreshToken);
+
+    const data = await getGmailHistory(gmail, historyId);
+
+    const messagesAdded = data.history[0].messagesAdded;
+
+    if (!messagesAdded) {
+      return res.status(404);
+    }
+
+    const hasPersonalCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_PERSONAL")
+    );
+
+    const hasSocialCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_SOCIAL")
+    );
+
+    const hasPromotionsCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_PROMOTIONS")
+    );
+    const hasUpdatesCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_UPDATES")
+    );
+    const hasForumsCategory = messagesAdded.some(({ message }) =>
+      message.labelIds.includes("CATEGORY_FORUMS")
+    );
+
+    if (
+      !hasPersonalCategory &&
+      !hasSocialCategory &&
+      !hasPromotionsCategory &&
+      !hasUpdatesCategory &&
+      !hasForumsCategory
+    ) {
+      return res.status(404);
+    }
+
+    //새로운 메일의 정보 추출
+    const message = await getLatestGmail(gmail);
+
+    //데이터 베이스에 저장
+    if (
+      message.gmail_from &&
+      message.gmail_to &&
+      message.gmail_subject &&
+      message.gmail_content &&
+      message.gmail_content_summarized
+    ) {
+      connection.query(
+        "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+        [
+          message.gmail_from,
+          message.gmail_to,
+          message.gmail_subject,
+          message.gmail_content,
+          message.gmail_content_summarized,
+        ],
+        function (error) {
+          if (error) throw error;
+          console.log(`Get new gmail of ${message.gmail_to}`);
+        }
+      );
+    }
+    return res.sendStatus(200);
   } catch (err) {
     console.error("Error in handling Gmail API webhook:", err);
     return res.sendStatus(500);
