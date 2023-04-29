@@ -273,7 +273,6 @@ async function setGmailAlarm(gmail_user) {
         "CATEGORY_PROMOTIONS",
         "CATEGORY_UPDATES",
         "CATEGORY_FORUMS",
-        "UNREAD",
       ],
       topicName: "projects/bubble-gmail-383603/topics/gmail_push",
       userId: "me",
@@ -340,7 +339,6 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
         "CATEGORY_PROMOTIONS",
         "CATEGORY_UPDATES",
         "CATEGORY_FORUMS",
-        "UNREAD",
       ],
       topicName: "projects/bubble-gmail-383603/topics/gmail_push",
       userId: "me",
@@ -396,12 +394,13 @@ app.post("/webhook/gmail", async (req, res) => {
       return res.status(500).send("Error getting gmail user");
     }
 
-    //webhook을 호출하는 모든 log 확인
-    console.log(
-      `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-    );
+    // //webhook을 호출하는 모든 log 확인
+    // console.log(
+    //   `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+    // );
 
-    //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신 && 새로운 메일이 아닐 경우 API 종료
+    //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신
+    //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 API를 종료하면 안됨
     if (historyId > prevHistoryId) {
       try {
         await updateGmailUserPrevHistoryId(
@@ -409,7 +408,7 @@ app.post("/webhook/gmail", async (req, res) => {
           historyId
         );
 
-        //webhook을 호출하는 유의미한 log 확인
+        //webhook을 호출하는 유의미한 log를 콘솔 창에 출력
         console.log(
           "\x1b[33m%s\x1b[0m",
           `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
@@ -425,6 +424,8 @@ app.post("/webhook/gmail", async (req, res) => {
 
     const gmail = await getGmailClient(refreshToken);
 
+    //수신한 메일의 경우 messagesAdded가 존재함
+    //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
     const prevData = await getGmailHistory(gmail, prevHistoryId);
     const data = await getGmailHistory(gmail, historyId);
 
@@ -435,11 +436,10 @@ app.post("/webhook/gmail", async (req, res) => {
     } else if (data.history && data.history[0].messagesAdded) {
       messagesAdded = data.history[0].messagesAdded;
     } else {
-      //새로 받은 메일의 경우는 messagesAdded가 존재함
-      //이메일 임시보관함에 생성된 메일이 DB에 저장되는 것을 방지
       return res.status(404);
     }
 
+    //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
     const hasPersonalCategory = messagesAdded.some(({ message }) =>
       message.labelIds.includes("CATEGORY_PERSONAL")
     );
@@ -458,7 +458,6 @@ app.post("/webhook/gmail", async (req, res) => {
       message.labelIds.includes("CATEGORY_FORUMS")
     );
 
-    //특정 카테고리의 메일함에 들어 온 메일만 확인
     if (
       !hasPersonalCategory &&
       !hasSocialCategory &&
@@ -472,6 +471,7 @@ app.post("/webhook/gmail", async (req, res) => {
     //새로운 메일의 정보 추출
     const message = await getLatestGmail(gmail);
 
+    //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
     if (
       message.gmail_from &&
       message.gmail_to &&
@@ -490,8 +490,8 @@ app.post("/webhook/gmail", async (req, res) => {
           if (error) throw error;
           if (results.length > 0) {
             console.log(
-              "\x1b[33m%s\x1b[0m",
-              `Duplicate gmail of ${message.gmail_to}`
+              "\x1b[31m%s\x1b[0m",
+              `Get duplicated gmail of ${message.gmail_to}`
             );
             return res.sendStatus(409);
           }
@@ -499,7 +499,7 @@ app.post("/webhook/gmail", async (req, res) => {
       );
     }
 
-    //데이터 베이스에 저장
+    //새로운 메일 데이터의 경우 DB에 저장
     if (
       message.gmail_from &&
       message.gmail_to &&
