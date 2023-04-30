@@ -297,7 +297,7 @@ async function setGmailAlarmAll() {
     }, 604800000);
   } catch (error) {
     logger.error(
-      "Error while setting gmail push notification of all gmail users:",
+      "While of all gmail users setting gmail push notification:",
       error
     );
     throw error;
@@ -336,7 +336,7 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error("Error while setting gmail push notification:", error);
+    logger.error("While on API setting gmail push notification:", error);
     return res.status(500).send(error);
   }
 });
@@ -370,16 +370,16 @@ app.post("/webhook/gmail", async (req, res) => {
       prevHistoryId = results[0].prev_history_id;
       refreshToken = results[0].refresh_token;
     } catch (error) {
-      logger.error("Error getting gmail user:", error);
-      return res.status(500).send("Error getting gmail user");
+      logger.error("While getting gmail user:", error);
+      return res.status(500).send("Error while getting gmail user");
     }
 
-    ////////
+    ////////////////
     // //webhook을 호출하는 모든 log 확인
     // console.log(
     //   `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
     // );
-    ////////
+    ////////////////
 
     //유의미한 로그, 즉 (historyId > prevHistoryId)일 경우 이하의 과정을 진행
     //유의미한 로그가 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 else에 "return res.status(404) 등을 넣어 강제로 API를 종료하면 안됨
@@ -396,10 +396,10 @@ app.post("/webhook/gmail", async (req, res) => {
           historyId
         );
       } catch (error) {
-        logger.error("Error updating gmail_user_prev_history_id:", error);
+        logger.error("While updating gmail_user_prev_history_id:", error);
         return res
           .status(500)
-          .send("Error updating gmail_user_prev_history_id");
+          .send("Error while updating gmail_user_prev_history_id");
       }
 
       //gmail_client를 생성
@@ -407,11 +407,11 @@ app.post("/webhook/gmail", async (req, res) => {
       try {
         gmail = await getGmailClient(refreshToken);
       } catch (error) {
-        logger.error("Error while getting google gmail client:", error);
+        logger.error("While getting google gmail client:", error);
         return res.status(500).send("Error while getting google gmail client");
       }
 
-      ////////
+      ////////////////
       // //수신한 메일의 경우 messagesAdded가 존재함
       // //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
       // const prevData = await getGmailHistory(gmail, prevHistoryId);
@@ -455,18 +455,18 @@ app.post("/webhook/gmail", async (req, res) => {
       // ) {
       //   return res.status(404);
       // }
-      ////////
+      ////////////////
 
       //새로운 메일의 정보 추출
       let message;
       try {
         message = await getLatestGmail(gmail);
       } catch (error) {
-        logger.error("Error while getting latest gmail:", error);
+        logger.error("While getting latest gmail:", error);
         return res.status(500).send("Error while getting latest gmail");
       }
 
-      ////////
+      ////////////////
       // //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
       // if (
       //   message.gmail_from &&
@@ -494,9 +494,9 @@ app.post("/webhook/gmail", async (req, res) => {
       //     }
       //   );
       // }
-      ////////
+      ////////////////
 
-      //from에 해당하는 gmail_user가 mysql DB gmail_user 테이블에 존재하는 경우, from에 해당하는 gmail_user가 임시 보관함에 올린 글이 gmail_collected에 저장되는 오류를 예방
+      //from에 해당하는 gmail_user가 mysql DB gmail_user 테이블에 존재하는 경우, from에 해당하는 gmail_user가 임시 보관함에 올린 글이 gmail_collected에 저장되는 오류를 방지
       const gmailFrom_ = message.gmail_from.replace(/.*<(.*)>/, "$1");
 
       if (req_message_data_decoded.emailAddress == gmailFrom_) {
@@ -513,8 +513,8 @@ app.post("/webhook/gmail", async (req, res) => {
           .replace(/\\/g, "")
           .replace(/"/g, "");
       } catch (error) {
-        logger.error("Error while summarizing gmail_content:", error);
-        return res.status(500).send("Error while summarizing gmail_content");
+        logger.error("While summarizing gmail content:", error);
+        return res.status(500).send("Error while summarizing gmail content");
       }
 
       //mySql DB 연결
@@ -550,14 +550,14 @@ app.post("/webhook/gmail", async (req, res) => {
           );
         }
       } catch (error) {
-        logger.error("Error while storing new gmail:", error);
+        logger.error("While storing new gmail:", error);
         return res.status(500).send("Error while storing new gmail");
       }
       connection.end();
     }
     return res.sendStatus(200);
   } catch (err) {
-    logger.error("Error in handling Gmail API webhook:", err);
+    logger.error("In handling Gmail API webhook:", err);
     return res.sendStatus(500);
   }
 });
