@@ -1,8 +1,6 @@
 const winston = require("winston");
 const winstonDaily = require("winston-daily-rotate-file");
 const appRoot = require("app-root-path");
-const { createLogger } = require("winston");
-const process = require("process");
 
 const { combine, timestamp, label, printf } = winston.format;
 
@@ -18,6 +16,7 @@ const logFormat = printf(({ level, message, label, timestamp }) => {
  * Log Level
  * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
  */
+
 const logger = winston.createLogger({
   //* 로그 출력 형식 정의
   format: combine(
