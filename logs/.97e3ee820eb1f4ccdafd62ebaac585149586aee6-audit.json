@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 30
+    },
+    "auditLog": "C:\\Users\\zsxd3\\web_study\\toggle_bubble\\logs\\.97e3ee820eb1f4ccdafd62ebaac585149586aee6-audit.json",
+    "files": [
+        {
+            "date": 1682869318014,
+            "name": "C:\\Users\\zsxd3\\web_study\\toggle_bubble\\logs\\2023-05-01.log",
+            "hash": "e36fe5acd68495e52d2a884f7ab538522504c754a9f68371b79dfc25dc8a6770"
+        }
+    ],
+    "hashType": "sha256"
+}

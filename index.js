@@ -9,6 +9,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { Configuration, OpenAIApi } = require("openai");
 
 const config = require("./config/config");
+const logger = require("./logger");
 
 const CLIENT_ID = config.CLIENT_ID;
 const CLIENT_SECRET = config.CLIENT_SECRET;
@@ -32,22 +33,13 @@ const openai = new OpenAIApi(configuration);
  * @returns oAuth2Client
  */
 async function getOAuth2Client(refreshToken) {
-  try {
-    const oAuth2Client = new OAuth2Client(
-      CLIENT_ID,
-      CLIENT_SECRET,
-      REDIRECT_URI
-    );
+  const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
-    oAuth2Client.setCredentials({
-      refresh_token: refreshToken,
-    });
+  oAuth2Client.setCredentials({
+    refresh_token: refreshToken,
+  });
 
-    return oAuth2Client;
-  } catch (error) {
-    console.error("Error while getting google oauth client:", error);
-    throw error;
-  }
+  return oAuth2Client;
 }
 
 /**
@@ -56,24 +48,29 @@ async function getOAuth2Client(refreshToken) {
  * @returns gmailClient
  */
 async function getGmailClient(refreshToken) {
-  try {
-    const oAuth2Client = new OAuth2Client(
-      CLIENT_ID,
-      CLIENT_SECRET,
-      REDIRECT_URI
-    );
+  const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
-    oAuth2Client.setCredentials({
-      refresh_token: refreshToken,
-    });
+  oAuth2Client.setCredentials({
+    refresh_token: refreshToken,
+  });
 
-    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-    return gmail;
-  } catch (error) {
-    console.error("Error while getting google gmail client:", error);
-    throw error;
-  }
+  return gmail;
+}
+
+/**
+ * gmail_client와 특정 로그의 history_id를 통해 해당 history의 상세 내용을 반환하는 함수
+ * @param {gmail_client} gmail
+ * @param {int} historyId
+ * @returns 해당 history의 상세 내용
+ */
+async function getGmailHistory(gmail, historyId) {
+  const res = await gmail.users.history.list({
+    userId: "me",
+    startHistoryId: historyId,
+  });
+  return res.data;
 }
 
 /**
@@ -92,14 +89,6 @@ async function summarizeText(text) {
   const summary = result.data.choices[0].text.trim();
 
   return summary;
-}
-
-async function getGmailHistory(gmail, historyId) {
-  const res = await gmail.users.history.list({
-    userId: "me",
-    startHistoryId: historyId,
-  });
-  return res.data;
 }
 
 /**
@@ -148,12 +137,6 @@ async function getLatestGmail(gmail) {
   const gmail_content_st = Buffer.from(bodyData, "base64").toString("utf-8");
   const gmail_content = gmail_content_st.replace(/\\/g, "").replace(/"/g, "");
 
-  //gmail_content_summarized 추출
-  const gmail_content_summarized_st = await summarizeText(gmail_content);
-  const gmail_content_summarized = gmail_content_summarized_st
-    .replace(/\\/g, "")
-    .replace(/"/g, "");
-
   //gmail_from, gmail_to, gmail_subject 추출
   const headers = payload.headers;
 
@@ -172,7 +155,6 @@ async function getLatestGmail(gmail) {
     gmail_from,
     gmail_to,
     gmail_subject,
-    gmail_content_summarized,
     gmail_content,
   };
 }
@@ -268,39 +250,31 @@ async function updateGmailUserPrevHistoryId(gmail, historyId) {
  * @param {gmail_user} gmail_user
  */
 async function setGmailAlarm(gmail_user) {
-  try {
-    const RefreshToken = gmail_user.refresh_token;
-    const oAuth2Client = await getOAuth2Client(RefreshToken);
-    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+  const RefreshToken = gmail_user.refresh_token;
+  const oAuth2Client = await getOAuth2Client(RefreshToken);
+  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-    //이유는 모르겠으나, "UNREAD"는 반드시 있어야 함
-    const request = {
-      labelIds: [
-        "CATEGORY_PERSONAL",
-        "CATEGORY_SOCIAL",
-        "CATEGORY_PROMOTIONS",
-        "CATEGORY_UPDATES",
-        "CATEGORY_FORUMS",
-        "UNREAD",
-      ],
-      topicName: "projects/bubble-gmail-383603/topics/gmail_push",
-      userId: "me",
-    };
+  //이유는 모르겠으나, "UNREAD"는 반드시 있어야 함
+  const request = {
+    labelIds: [
+      "CATEGORY_PERSONAL",
+      "CATEGORY_SOCIAL",
+      "CATEGORY_PROMOTIONS",
+      "CATEGORY_UPDATES",
+      "CATEGORY_FORUMS",
+      "UNREAD",
+    ],
+    topicName: "projects/bubble-gmail-383603/topics/gmail_push",
+    userId: "me",
+  };
 
-    gmail.users.watch(request, (err) => {
-      if (err) {
-        console.error("Error while setting gmail push notification:", err);
-      } else {
-        console.log(
-          "\x1b[33m%s\x1b[0m",
-          `Set gmail push notification of <${gmail_user.gmail}>`
-        );
-      }
-    });
-  } catch (error) {
-    console.error("Error while setting gmail push notification:", error);
-    throw error;
-  }
+  gmail.users.watch(request, (err) => {
+    if (err) {
+      throw err;
+    } else {
+      logger.info(`Set gmail push notification of <${gmail_user.gmail}>`);
+    }
+  });
 }
 
 /**
@@ -316,16 +290,13 @@ async function setGmailAlarmAll() {
       }
     });
 
-    console.log(
-      "\x1b[34m%s\x1b[0m",
-      `Start setting gmail push notification of all gmail users`
-    );
+    logger.info(`Start setting gmail push notification of all gmail users`);
 
     setTimeout(() => {
-      run();
+      setGmailAlarmAll();
     }, 604800000);
   } catch (error) {
-    console.error(
+    logger.error(
       "Error while setting gmail push notification of all gmail users:",
       error
     );
@@ -358,15 +329,14 @@ app.post("/api/gmail/pushNotificationSet", async (req, res) => {
 
     gmail.users.watch(request, (err) => {
       if (err) {
-        console.error("Error while setting push notification:", err);
-        return res.status(500).send(err);
+        throw err;
       } else {
-        console.log(`Set gmail push notification of <${req.body.gmail}>`);
+        logger.info(`Set gmail push notification of <${req.body.gmail}>`);
         return res.status(200).send({ status: "ok" });
       }
     });
   } catch (error) {
-    console.error("Error while setting gmail push notification:", error);
+    logger.error("Error while setting gmail push notification:", error);
     return res.status(500).send(error);
   }
 });
@@ -385,144 +355,184 @@ app.post("/webhook/gmail", async (req, res) => {
     //log의 historyId 추출
     const historyId = req_message_data_decoded.historyId;
 
-    //mysql DB에서 가져올 값에 대한 변수 선언
+    //log를 발생시킨 유저의 prev_history_id와 refreshToken 추출
     let prevHistoryId = 0;
     let refreshToken = "";
-
-    //prev_history_id 추출
     try {
       const results = await getGmailUser(req_message_data_decoded.emailAddress);
 
       //해당 유저의 정보가 없으면 API 종료
       if (results.length === 0) {
-        return res.status(404);
+        return res.status(200);
       }
 
-      //해당 유저의 정보가 있으면 위에서 선언한 mysql DB에서 가져올 값에 대한 변수에 저장
+      //해당 유저의 정보가 있으면 위에서 선언한 변수에 저장
       prevHistoryId = results[0].prev_history_id;
       refreshToken = results[0].refresh_token;
     } catch (error) {
-      console.error("Error getting gmail user:", error);
+      logger.error("Error getting gmail user:", error);
       return res.status(500).send("Error getting gmail user");
     }
 
+    ////////
     // //webhook을 호출하는 모든 log 확인
     // console.log(
     //   `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
     // );
+    ////////
 
-    //새로운 메일, 즉 (historyId > prevHistoryId)일 경우 해당 유저의 prev_history_id 갱신
-    //새로운 메일이 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 API를 종료하면 안됨
+    //유의미한 로그, 즉 (historyId > prevHistoryId)일 경우 이하의 과정을 진행
+    //유의미한 로그가 아닐 경우, 즉 (historyId <= prevHistoryId)일 경우라도 else에 "return res.status(404) 등을 넣어 강제로 API를 종료하면 안됨
     if (historyId > prevHistoryId) {
-      try {
-        //webhook을 호출하는 유의미한 log를 콘솔 창에 출력
-        console.log(
-          "\x1b[33m%s\x1b[0m",
-          `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
-        );
+      //webhook을 호출하는 유의미한 log를 콘솔 창에 출력
+      logger.info(
+        `gmail: ${req_message_data_decoded.emailAddress}, historyId: ${historyId}, prevHistoryId: ${prevHistoryId}`
+      );
 
+      //gmail_user의 prev_history_id를 유의미한 log에 대한 history_id로 변경
+      try {
         await updateGmailUserPrevHistoryId(
           req_message_data_decoded.emailAddress,
           historyId
         );
+      } catch (error) {
+        logger.error("Error updating gmail_user_prev_history_id:", error);
+        return res
+          .status(500)
+          .send("Error updating gmail_user_prev_history_id");
+      }
 
-        const gmail = await getGmailClient(refreshToken);
+      //gmail_client를 생성
+      let gmail;
+      try {
+        gmail = await getGmailClient(refreshToken);
+      } catch (error) {
+        logger.error("Error while getting google gmail client:", error);
+        return res.status(500).send("Error while getting google gmail client");
+      }
 
-        // //수신한 메일의 경우 messagesAdded가 존재함
-        // //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
-        // const prevData = await getGmailHistory(gmail, prevHistoryId);
-        // const data = await getGmailHistory(gmail, historyId);
+      ////////
+      // //수신한 메일의 경우 messagesAdded가 존재함
+      // //prevData와 data 모두에서 messagesAdded가 존재하지 않을 경우 API 종료
+      // const prevData = await getGmailHistory(gmail, prevHistoryId);
+      // const data = await getGmailHistory(gmail, historyId);
 
-        // let messagesAdded = null;
+      // let messagesAdded = null;
 
-        // if (prevData.history && prevData.history[0].messagesAdded) {
-        //   messagesAdded = prevData.history[0].messagesAdded;
-        // } else if (data.history && data.history[0].messagesAdded) {
-        //   messagesAdded = data.history[0].messagesAdded;
-        // } else {
-        //   return res.status(404);
-        // }
+      // if (prevData.history && prevData.history[0].messagesAdded) {
+      //   messagesAdded = prevData.history[0].messagesAdded;
+      // } else if (data.history && data.history[0].messagesAdded) {
+      //   messagesAdded = data.history[0].messagesAdded;
+      // } else {
+      //   return res.status(404);
+      // }
 
-        // //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
-        // const hasPersonalCategory = messagesAdded.some(({ message }) =>
-        //   message.labelIds.includes("CATEGORY_PERSONAL")
-        // );
+      // //특정 카테고리의 메일함에 들어 온 메일이 아닐 경우 API 종료
+      // const hasPersonalCategory = messagesAdded.some(({ message }) =>
+      //   message.labelIds.includes("CATEGORY_PERSONAL")
+      // );
 
-        // const hasSocialCategory = messagesAdded.some(({ message }) =>
-        //   message.labelIds.includes("CATEGORY_SOCIAL")
-        // );
+      // const hasSocialCategory = messagesAdded.some(({ message }) =>
+      //   message.labelIds.includes("CATEGORY_SOCIAL")
+      // );
 
-        // const hasPromotionsCategory = messagesAdded.some(({ message }) =>
-        //   message.labelIds.includes("CATEGORY_PROMOTIONS")
-        // );
-        // const hasUpdatesCategory = messagesAdded.some(({ message }) =>
-        //   message.labelIds.includes("CATEGORY_UPDATES")
-        // );
-        // const hasForumsCategory = messagesAdded.some(({ message }) =>
-        //   message.labelIds.includes("CATEGORY_FORUMS")
-        // );
+      // const hasPromotionsCategory = messagesAdded.some(({ message }) =>
+      //   message.labelIds.includes("CATEGORY_PROMOTIONS")
+      // );
+      // const hasUpdatesCategory = messagesAdded.some(({ message }) =>
+      //   message.labelIds.includes("CATEGORY_UPDATES")
+      // );
+      // const hasForumsCategory = messagesAdded.some(({ message }) =>
+      //   message.labelIds.includes("CATEGORY_FORUMS")
+      // );
 
-        // if (
-        //   !hasPersonalCategory &&
-        //   !hasSocialCategory &&
-        //   !hasPromotionsCategory &&
-        //   !hasUpdatesCategory &&
-        //   !hasForumsCategory
-        // ) {
-        //   return res.status(404);
-        // }
+      // if (
+      //   !hasPersonalCategory &&
+      //   !hasSocialCategory &&
+      //   !hasPromotionsCategory &&
+      //   !hasUpdatesCategory &&
+      //   !hasForumsCategory
+      // ) {
+      //   return res.status(404);
+      // }
+      ////////
 
-        //새로운 메일의 정보 추출
-        const message = await getLatestGmail(gmail);
+      //새로운 메일의 정보 추출
+      let message;
+      try {
+        message = await getLatestGmail(gmail);
+      } catch (error) {
+        logger.error("Error while getting latest gmail:", error);
+        return res.status(500).send("Error while getting latest gmail");
+      }
 
-        // //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
-        // if (
-        //   message.gmail_from &&
-        //   message.gmail_to &&
-        //   message.gmail_subject &&
-        //   message.gmail_content
-        // ) {
-        //   connection.query(
-        //     "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
-        //     [
-        //       message.gmail_from,
-        //       message.gmail_to,
-        //       message.gmail_subject,
-        //       message.gmail_content,
-        //     ],
-        //     function (error, results) {
-        //       if (error) throw error;
-        //       if (results.length > 0) {
-        //         console.log(
-        //           "\x1b[31m%s\x1b[0m",
-        //           `Get duplicated gmail of ${message.gmail_to}`
-        //         );
-        //         return;
-        //       }
-        //     }
-        //   );
-        // }
-        const gmailFrom_ = message.gmail_from.replace(/.*<(.*)>/, "$1");
+      ////////
+      // //중복되는 메일 데이터의 경우 DB에 저장하지 않고 API 종료
+      // if (
+      //   message.gmail_from &&
+      //   message.gmail_to &&
+      //   message.gmail_subject &&
+      //   message.gmail_content
+      // ) {
+      //   connection.query(
+      //     "SELECT * FROM `gmail_collected` WHERE `from` = ? AND `to` = ? AND `subject` = ? AND `content` = ?",
+      //     [
+      //       message.gmail_from,
+      //       message.gmail_to,
+      //       message.gmail_subject,
+      //       message.gmail_content,
+      //     ],
+      //     function (error, results) {
+      //       if (error) throw error;
+      //       if (results.length > 0) {
+      //         console.log(
+      //           "\x1b[31m%s\x1b[0m",
+      //           `Get duplicated gmail of ${message.gmail_to}`
+      //         );
+      //         return;
+      //       }
+      //     }
+      //   );
+      // }
+      ////////
 
-        if (req_message_data_decoded.emailAddress == gmailFrom_) {
-          return res.sendStatus(200);
-        }
+      //from에 해당하는 gmail_user가 mysql DB gmail_user 테이블에 존재하는 경우, from에 해당하는 gmail_user가 임시 보관함에 올린 글이 gmail_collected에 저장되는 오류를 예방
+      const gmailFrom_ = message.gmail_from.replace(/.*<(.*)>/, "$1");
 
-        //mySql DB 연결
-        const connection = mysql.createConnection({
-          host: config.MYSQLHOST,
-          user: config.MYSQLUSER,
-          password: config.MYSQLPASSWORD,
-          database: config.MYSQLDATABASE,
-        });
+      if (req_message_data_decoded.emailAddress == gmailFrom_) {
+        return res.sendStatus(200);
+      }
 
-        //새로운 메일 데이터의 경우 DB에 저장
+      //gmail_content_summarized 추출
+      let gmail_content_summarized;
+      try {
+        const gmail_content_summarized_st = await summarizeText(
+          message.gmail_content
+        );
+        gmail_content_summarized = gmail_content_summarized_st
+          .replace(/\\/g, "")
+          .replace(/"/g, "");
+      } catch (error) {
+        logger.error("Error while summarizing gmail_content:", error);
+        return res.status(500).send("Error while summarizing gmail_content");
+      }
+
+      //mySql DB 연결
+      const connection = mysql.createConnection({
+        host: config.MYSQLHOST,
+        user: config.MYSQLUSER,
+        password: config.MYSQLPASSWORD,
+        database: config.MYSQLDATABASE,
+      });
+
+      //새로운 메일 데이터의 경우 DB에 저장
+      try {
         if (
           message.gmail_from &&
           message.gmail_to &&
           message.gmail_subject &&
           message.gmail_content &&
-          message.gmail_content_summarized
+          gmail_content_summarized
         ) {
           connection.query(
             "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
@@ -531,28 +541,23 @@ app.post("/webhook/gmail", async (req, res) => {
               message.gmail_to,
               message.gmail_subject,
               message.gmail_content,
-              message.gmail_content_summarized,
+              gmail_content_summarized,
             ],
             function (error) {
               if (error) throw error;
-              console.log(
-                "\x1b[32m%s\x1b[0m",
-                `Get new gmail of ${message.gmail_to}`
-              );
+              logger.info(`Get new gmail of ${message.gmail_to}`);
             }
           );
         }
-        connection.end();
       } catch (error) {
-        console.error("Error updating gmail_user_prev_history_id:", error);
-        return res
-          .status(500)
-          .send("Error updating gmail_user_prev_history_id");
+        logger.error("Error while storing new gmail:", error);
+        return res.status(500).send("Error while storing new gmail");
       }
+      connection.end();
     }
     return res.sendStatus(200);
   } catch (err) {
-    console.error("Error in handling Gmail API webhook:", err);
+    logger.error("Error in handling Gmail API webhook:", err);
     return res.sendStatus(500);
   }
 });

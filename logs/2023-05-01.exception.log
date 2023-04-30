@@ -1,0 +1,45 @@
+2023-05-01 00:42:08 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:42:08 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:42:08 [togglecampus] error: uncaughtException: Connection lost: The server closed the connection.
+Error: Connection lost: The server closed the connection.
+    at Socket.<anonymous> (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:114:31)
+    at Socket.emit (node:events:513:28)
+    at TCP.<anonymous> (node:net:322:12)
+2023-05-01 00:46:27 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:46:27 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:46:27 [togglecampus] error: uncaughtException: Connection lost: The server closed the connection.
+Error: Connection lost: The server closed the connection.
+    at Socket.<anonymous> (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:114:31)
+    at Socket.emit (node:events:513:28)
+    at TCP.<anonymous> (node:net:322:12)
+2023-05-01 00:51:32 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:51:32 [togglecampus] error: uncaughtException: connect ETIMEDOUT
+Error: connect ETIMEDOUT
+    at Connection._handleTimeoutError (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:202:17)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+2023-05-01 00:51:32 [togglecampus] error: uncaughtException: Connection lost: The server closed the connection.
+Error: Connection lost: The server closed the connection.
+    at Socket.<anonymous> (C:\Users\zsxd3\web_study\toggle_bubble\node_modules\mysql2\lib\connection.js:114:31)
+    at Socket.emit (node:events:513:28)
+    at TCP.<anonymous> (node:net:322:12)
