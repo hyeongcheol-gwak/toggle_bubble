@@ -1,3 +1,5 @@
 node_modules
 config
 logs
+prod_logs
+command.txt
