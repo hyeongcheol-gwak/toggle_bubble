@@ -127,7 +127,7 @@ async function eventPlanned(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Answer "yes" or "no". Decide whether additional actions such as making or modifying a schedule are needed or not after reading the following text::\n\n${text}`,
+    prompt: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
     temperature: 0,
     max_tokens: 64,
     top_p: 1.0,
@@ -587,7 +587,6 @@ app.post("/webhook/gmail", async (req, res) => {
             "Error While deciding whether or not action is needed in gmail content"
           );
       }
-      console.log(isActionNeeded);
 
       //isEventPlanned 추출
       let isEventPlanned;
