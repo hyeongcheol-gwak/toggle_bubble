@@ -82,12 +82,12 @@ async function summarizeText(text) {
   //해당 propmt는 공식 문서에 따라 작성된 것임
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `${text}\n\nTl;dr`,
+    prompt: `Summarize the following text in one or two sentences:\n\n${text}`,
     temperature: 0.7,
-    max_tokens: 60,
+    max_tokens: 64,
     top_p: 1.0,
     frequency_penalty: 0.0,
-    presence_penalty: 1,
+    presence_penalty: 0.0,
     n: 1,
   });
   const summary = result.data.choices[0].text.trim();
@@ -104,10 +104,12 @@ async function actionNeeded(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `- Todo: Answer yes or no for the next statement: Does the input require a reply?
-    - Input: please reply to me`,
-    max_tokens: 1000,
-    temperature: 0.3,
+    prompt: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+    temperature: 0,
+    max_tokens: 64,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 0.0,
     n: 1,
     stop: ["yes", "no"],
   });
@@ -127,10 +129,12 @@ async function eventPlanned(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `- Todo: Answer yes or no for the next statement: Does the input create or update an event
-    - Input: ${text}`,
-    max_tokens: 1000,
-    temperature: 0.3,
+    prompt: `Answer "yes" or "no". Decide whether additional actions such as creating or modifying an event in a calendar are needed or not in the following text::\n\n${text}`,
+    temperature: 0,
+    max_tokens: 64,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 0.0,
     n: 1,
     stop: ["yes", "no"],
   });
