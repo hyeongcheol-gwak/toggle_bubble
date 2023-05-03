@@ -104,7 +104,7 @@ async function actionNeeded(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+    prompt: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text:\n\n${text}`,
     temperature: 0,
     max_tokens: 64,
     top_p: 1.0,
@@ -160,7 +160,7 @@ async function eventPlanned(text) {
     messages: [
       {
         role: "user",
-        content: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
+        content: `Answer "yes" or "no". Decide whether the following text has anything with the schedule, event or time:\n\n${text}`,
       },
     ],
     temperature: 0.2,
