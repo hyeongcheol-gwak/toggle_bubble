@@ -79,12 +79,15 @@ async function summarizeText(text) {
 
   const openai = new OpenAIApi(configuration);
 
+  //해당 propmt는 공식 문서에 따라 작성된 것임
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `- Todo: From the input, summarize it into one sentence.
-    - Input: ${text}`,
-    max_tokens: 1500,
-    temperature: 0.5,
+    prompt: `${text}\n\nTl;dr`,
+    temperature: 0.7,
+    max_tokens: 60,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 1,
     n: 1,
   });
   const summary = result.data.choices[0].text.trim();
