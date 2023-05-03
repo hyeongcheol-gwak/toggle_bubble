@@ -91,6 +91,52 @@ async function summarizeText(text) {
   return summary;
 }
 
+async function actionNeeded(text) {
+  const configuration = new Configuration({
+    apiKey: config.OPENAI_API_KEY,
+  });
+
+  const openai = new OpenAIApi(configuration);
+
+  const result = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `Please answer true or false. Decide whether or not reply is needed in following text:<${text}>?`,
+    max_tokens: 1,
+    temperature: 0,
+    stop: None,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    n: 1,
+  });
+  const is_true =
+    result.data.choices[0].text.trim().toLowerCase() === "true" ? 1 : 0;
+
+  return is_true;
+}
+
+async function eventPlanned(text) {
+  const configuration = new Configuration({
+    apiKey: config.OPENAI_API_KEY,
+  });
+
+  const openai = new OpenAIApi(configuration);
+
+  const result = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `Please answer true or false. Decide whether or not event is planned in following text:<${text}>?`,
+    max_tokens: 1,
+    temperature: 0,
+    stop: None,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    n: 1,
+  });
+  const is_true =
+    result.data.choices[0].text.trim().toLowerCase() === "true" ? 1 : 0;
+
+  return is_true;
+}
+
 /**
  * gmail_refresh_token을 통해 유저의 가장 최신 gmail을 추출하고 해당 gmail에서 DB 저장에 필요한 정보를 필터링하여 결과로 반환하는 함수
  * @param {string} refreshToken
@@ -519,6 +565,38 @@ app.post("/webhook/gmail", async (req, res) => {
         return res.status(500).send("Error while summarizing gmail content");
       }
 
+      //isActionNeeded 추출
+      let isActionNeeded;
+      try {
+        isActionNeeded = await actionNeeded(message.gmail_content);
+      } catch (error) {
+        logger.error(
+          "While deciding whether or not action is needed in gmail content:",
+          error
+        );
+        return res
+          .status(500)
+          .send(
+            "Error While deciding whether or not action is needed in gmail content"
+          );
+      }
+
+      //isEventPlanned 추출
+      let isEventPlanned;
+      try {
+        isEventPlanned = await eventPlanned(message.gmail_content);
+      } catch (error) {
+        logger.error(
+          "While deciding whether or not event is planned in gmail content:",
+          error
+        );
+        return res
+          .status(500)
+          .send(
+            "Error While deciding whether or not event is planned in gmail content"
+          );
+      }
+
       //mySql DB 연결
       const connection = mysql.createConnection({
         host: config.MYSQLHOST,
@@ -537,7 +615,7 @@ app.post("/webhook/gmail", async (req, res) => {
           gmail_content_summarized
         ) {
           connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
             [
               message.gmail_from,
               message.gmail_to,
@@ -545,6 +623,8 @@ app.post("/webhook/gmail", async (req, res) => {
               message.gmail_content,
               gmail_content_summarized,
               bubbleEmail,
+              isActionNeeded,
+              isEventPlanned,
             ],
             function (error) {
               if (error) throw error;
