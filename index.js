@@ -113,10 +113,8 @@ async function actionNeeded(text) {
     n: 1,
     stop: ["yes", "no"],
   });
-  console.log(result.data.choices[0].text.trim());
   const is_true =
     result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
-  console.log(is_true);
   return is_true;
 }
 
@@ -129,7 +127,7 @@ async function eventPlanned(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Answer "yes" or "no". Decide whether additional actions such as creating or modifying an event in a calendar are needed or not in the following text::\n\n${text}`,
+    prompt: `Answer "yes" or "no". Decide whether additional actions such as making or modifying a schedule are needed or not after reading the following text::\n\n${text}`,
     temperature: 0,
     max_tokens: 64,
     top_p: 1.0,
@@ -138,6 +136,8 @@ async function eventPlanned(text) {
     n: 1,
     stop: ["yes", "no"],
   });
+  console.log(text);
+  console.log(result.data.choices[0].text.trim());
   const is_true =
     result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
 
@@ -572,11 +572,9 @@ app.post("/webhook/gmail", async (req, res) => {
         return res.status(500).send("Error while summarizing gmail content");
       }
 
-      actionNeeded(message.gmail_content);
       //isActionNeeded 추출
       let isActionNeeded;
       try {
-        console.log(message.gmail_content);
         isActionNeeded = await actionNeeded(message.gmail_content);
       } catch (error) {
         logger.error(
