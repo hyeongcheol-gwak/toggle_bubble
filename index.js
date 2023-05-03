@@ -81,7 +81,9 @@ async function summarizeText(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `summarize the following text into one or two sentences: ${text}`,
+    prompt: `- Todo: From the input, for each 350 characters, summarize it into one sentence.
+    - Desired Format: summarized sentences.
+    - Input: ${text}`,
     max_tokens: 1000,
     temperature: 0.2,
     n: 1,
@@ -100,7 +102,9 @@ async function actionNeeded(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Please answer "yes" or "no". Decide whether or not reply is needed in following text:<${text}>?`,
+    prompt: `- Todo: Answer yes or no for the next statement: Does the input require an action?
+    - Desired Format: yes or no
+    - Input: ${text}`,
     max_tokens: 500,
     temperature: 0.3,
     n: 1,
@@ -122,7 +126,9 @@ async function eventPlanned(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Please answer "yes" or "no". Decide whether or not event is planned in following text:<${text}>?`,
+    prompt: `- Todo: Answer yes or no for the next statement: Does the input create or update an event
+    - Desired Format: yes or no
+    - Input: ${text}`,
     max_tokens: 500,
     temperature: 0.3,
     n: 1,
@@ -567,7 +573,7 @@ app.post("/webhook/gmail", async (req, res) => {
       let isActionNeeded;
       try {
         console.log(message.gmail_content);
-        isActionNeeded = actionNeeded(message.gmail_content);
+        isActionNeeded = await actionNeeded(message.gmail_content);
       } catch (error) {
         logger.error(
           "While deciding whether or not action is needed in gmail content:",
