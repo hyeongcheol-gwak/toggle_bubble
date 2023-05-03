@@ -565,6 +565,7 @@ app.post("/webhook/gmail", async (req, res) => {
       //isActionNeeded 추출
       let isActionNeeded;
       try {
+        console.log(message.gmail_content);
         isActionNeeded = await actionNeeded(message.gmail_content);
       } catch (error) {
         logger.error(
