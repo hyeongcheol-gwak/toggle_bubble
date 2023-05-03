@@ -102,7 +102,7 @@ async function actionNeeded(text) {
   const result = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `- Todo: Answer yes or no for the next statement: Does the input require a reply?
-    - Input: ${text}`,
+    - Input: please reply to me`,
     max_tokens: 1000,
     temperature: 0.3,
     n: 1,
@@ -123,7 +123,7 @@ async function eventPlanned(text) {
   const openai = new OpenAIApi(configuration);
 
   const result = await openai.createCompletion({
-    model: "text-davinci-00",
+    model: "text-davinci-003",
     prompt: `- Todo: Answer yes or no for the next statement: Does the input create or update an event
     - Input: ${text}`,
     max_tokens: 1000,
