@@ -131,8 +131,12 @@ async function actionNeeded(text) {
   //   // stop: ["yes", "no"],
   // });
 
-  const is_true =
-    result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
+  const is_true = result.data.choices[0].text
+    .trim()
+    .toLowerCase()
+    .includes("yes")
+    ? 1
+    : 0;
   return is_true;
 }
 
@@ -174,8 +178,11 @@ async function eventPlanned(text) {
 
   console.log(text);
   console.log(result.data.choices[0].message.content);
-  const is_true =
-    result.data.choices[0].message.content.toLowerCase() === "yes" ? 1 : 0;
+  const is_true = result.data.choices[0].message.content
+    .toLowerCase()
+    .includes("yes")
+    ? 1
+    : 0;
 
   return is_true;
 }
