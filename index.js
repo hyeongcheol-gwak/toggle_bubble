@@ -101,8 +101,8 @@ async function actionNeeded(text) {
   const result = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `Please answer "yes" or "no". Decide whether or not reply is needed in following text:<${text}>?`,
-    max_tokens: 3,
-    temperature: 0.1,
+    max_tokens: 500,
+    temperature: 0.3,
     n: 1,
     stop: ["yes", "no"],
   });
@@ -123,8 +123,8 @@ async function eventPlanned(text) {
   const result = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `Please answer "yes" or "no". Decide whether or not event is planned in following text:<${text}>?`,
-    max_tokens: 3,
-    temperature: 0.1,
+    max_tokens: 500,
+    temperature: 0.3,
     n: 1,
     stop: ["yes", "no"],
   });
