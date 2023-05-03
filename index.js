@@ -355,9 +355,10 @@ app.post("/webhook/gmail", async (req, res) => {
     //log의 historyId 추출
     const historyId = req_message_data_decoded.historyId;
 
-    //log를 발생시킨 유저의 prev_history_id와 refreshToken 추출
+    //log를 발생시킨 유저의 prev_history_id, refreshToken 그리고 bubbleEmail 추출
     let prevHistoryId = 0;
     let refreshToken = "";
+    let bubbleEmail = "";
     try {
       const results = await getGmailUser(req_message_data_decoded.emailAddress);
 
@@ -369,6 +370,7 @@ app.post("/webhook/gmail", async (req, res) => {
       //해당 유저의 정보가 있으면 위에서 선언한 변수에 저장
       prevHistoryId = results[0].prev_history_id;
       refreshToken = results[0].refresh_token;
+      bubbleEmail = results[0].bubble_email;
     } catch (error) {
       logger.error("While getting gmail user:", error);
       return res.status(500).send("Error while getting gmail user");
@@ -535,13 +537,14 @@ app.post("/webhook/gmail", async (req, res) => {
           gmail_content_summarized
         ) {
           connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
             [
               message.gmail_from,
               message.gmail_to,
               message.gmail_subject,
               message.gmail_content,
               gmail_content_summarized,
+              bubbleEmail,
             ],
             function (error) {
               if (error) throw error;
