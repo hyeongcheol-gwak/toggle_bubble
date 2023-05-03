@@ -101,12 +101,12 @@ async function actionNeeded(text) {
   const openai = new OpenAIApi(configuration);
 
   const result = await openai.createCompletion({
-    model: "text-davinci-003",
+    model: "text-davinci-002",
     prompt: `- Todo: Answer yes or no for the next statement: Does the input require an action?
     - Desired Format: yes or no
     - Input: ${text}`,
-    max_tokens: 500,
-    temperature: 0.3,
+    max_tokens: 5,
+    temperature: 0.2,
     n: 1,
     stop: ["yes", "no"],
   });
@@ -125,12 +125,12 @@ async function eventPlanned(text) {
   const openai = new OpenAIApi(configuration);
 
   const result = await openai.createCompletion({
-    model: "text-davinci-003",
+    model: "text-davinci-002",
     prompt: `- Todo: Answer yes or no for the next statement: Does the input create or update an event
     - Desired Format: yes or no
     - Input: ${text}`,
-    max_tokens: 500,
-    temperature: 0.3,
+    max_tokens: 5,
+    temperature: 0.2,
     n: 1,
     stop: ["yes", "no"],
   });
