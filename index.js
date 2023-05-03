@@ -113,6 +113,24 @@ async function actionNeeded(text) {
     n: 1,
     stop: ["yes", "no"],
   });
+
+  // const result = await openai.createChatCompletion({
+  //   model: "gpt-3.5-turbo",
+  //   messages: [
+  //     {
+  //       role: "user",
+  //       content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+  //     },
+  //   ],
+  //   // temperature: 0,
+  //   // max_tokens: 64,
+  //   // top_p: 1.0,
+  //   // frequency_penalty: 0.0,
+  //   // presence_penalty: 0.0,
+  //   // n: 1,
+  //   // stop: ["yes", "no"],
+  // });
+
   const is_true =
     result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
   return is_true;
@@ -125,17 +143,35 @@ async function eventPlanned(text) {
 
   const openai = new OpenAIApi(configuration);
 
-  const result = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
-    temperature: 0,
-    max_tokens: 64,
-    top_p: 1.0,
-    frequency_penalty: 0.0,
-    presence_penalty: 0.0,
-    n: 1,
-    stop: ["yes", "no"],
+  // const result = await openai.createCompletion({
+  //   model: "text-davinci-003",
+  //   prompt: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
+  //   temperature: 0,
+  //   max_tokens: 64,
+  //   top_p: 1.0,
+  //   frequency_penalty: 0.0,
+  //   presence_penalty: 0.0,
+  //   n: 1,
+  //   stop: ["yes", "no"],
+  // });
+
+  const result = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [
+      {
+        role: "user",
+        content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+      },
+    ],
+    // temperature: 0,
+    // max_tokens: 64,
+    // top_p: 1.0,
+    // frequency_penalty: 0.0,
+    // presence_penalty: 0.0,
+    // n: 1,
+    // stop: ["yes", "no"],
   });
+
   console.log(text);
   console.log(result.data.choices[0].text.trim());
   const is_true =
