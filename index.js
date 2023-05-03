@@ -81,11 +81,11 @@ async function summarizeText(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `- Todo: From the input, for each 350 characters, summarize it into one sentence.
+    prompt: `- Todo: From the input, summarize it into one sentence.
     - Desired Format: summarized sentences.
     - Input: ${text}`,
-    max_tokens: 1000,
-    temperature: 0.2,
+    max_tokens: 1500,
+    temperature: 0.5,
     n: 1,
   });
   const summary = result.data.choices[0].text.trim();
@@ -105,8 +105,8 @@ async function actionNeeded(text) {
     prompt: `- Todo: Answer yes or no for the next statement: Does the input require an action?
     - Desired Format: yes or no
     - Input: ${text}`,
-    max_tokens: 50,
-    temperature: 0.2,
+    max_tokens: 500,
+    temperature: 0.25,
     n: 1,
     stop: ["yes", "no"],
   });
