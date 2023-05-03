@@ -100,15 +100,14 @@ async function actionNeeded(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Please answer true or false. Decide whether or not reply is needed in following text:<${text}>?`,
-    max_tokens: 1,
-    temperature: 0,
-    frequency_penalty: 0,
-    presence_penalty: 0,
+    prompt: `Please answer "yes" or "no". Decide whether or not reply is needed in following text:<${text}>?`,
+    max_tokens: 3,
+    temperature: 0.1,
     n: 1,
+    stop: ["yes", "no"],
   });
   const is_true =
-    result.data.choices[0].text.trim().toLowerCase() === "true" ? 1 : 0;
+    result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
 
   return is_true;
 }
@@ -122,15 +121,14 @@ async function eventPlanned(text) {
 
   const result = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `Please answer true or false. Decide whether or not event is planned in following text:<${text}>?`,
-    max_tokens: 1,
-    temperature: 0,
-    frequency_penalty: 0,
-    presence_penalty: 0,
+    prompt: `Please answer "yes" or "no". Decide whether or not event is planned in following text:<${text}>?`,
+    max_tokens: 3,
+    temperature: 0.1,
     n: 1,
+    stop: ["yes", "no"],
   });
   const is_true =
-    result.data.choices[0].text.trim().toLowerCase() === "true" ? 1 : 0;
+    result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
 
   return is_true;
 }
