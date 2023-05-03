@@ -99,7 +99,7 @@ async function actionNeeded(text) {
   const openai = new OpenAIApi(configuration);
 
   const result = await openai.createCompletion({
-    model: "text-davinci-003",
+    model: "gpt-3.5-turbo",
     prompt: `Please answer "yes" or "no". Decide whether or not reply is needed in following text:<${text}>?`,
     max_tokens: 500,
     temperature: 0.3,
@@ -121,7 +121,7 @@ async function eventPlanned(text) {
   const openai = new OpenAIApi(configuration);
 
   const result = await openai.createCompletion({
-    model: "text-davinci-003",
+    model: "gpt-3.5-turbo",
     prompt: `Please answer "yes" or "no". Decide whether or not event is planned in following text:<${text}>?`,
     max_tokens: 500,
     temperature: 0.3,
