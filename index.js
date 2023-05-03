@@ -160,7 +160,7 @@ async function eventPlanned(text) {
     messages: [
       {
         role: "user",
-        content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+        content: `Answer "yes" or "no". ecide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
       },
     ],
     temperature: 0,
