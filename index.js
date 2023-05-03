@@ -106,9 +106,10 @@ async function actionNeeded(text) {
     n: 1,
     stop: ["yes", "no"],
   });
+  console.log(result.data.choices[0].text.trim());
   const is_true =
     result.data.choices[0].text.trim().toLowerCase() === "yes" ? 1 : 0;
-
+  console.log(is_true);
   return is_true;
 }
 
@@ -576,6 +577,7 @@ app.post("/webhook/gmail", async (req, res) => {
             "Error While deciding whether or not action is needed in gmail content"
           );
       }
+      console.log(isActionNeeded);
 
       //isEventPlanned 추출
       let isEventPlanned;
