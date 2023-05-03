@@ -21,12 +21,6 @@ const port = process.env.PORT || 80;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const configuration = new Configuration({
-  apiKey: config.OPENAI_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
 /**
  * gmail_refresh_token을 통해 oAuth2Client를 생성하는 함수
  * @param {string} refreshToken
@@ -79,6 +73,12 @@ async function getGmailHistory(gmail, historyId) {
  * @returns 요약된 text를 반환
  */
 async function summarizeText(text) {
+  const configuration = new Configuration({
+    apiKey: config.OPENAI_API_KEY,
+  });
+
+  const openai = new OpenAIApi(configuration);
+
   const result = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `summarize the following text into one or two sentences: ${text}`,
