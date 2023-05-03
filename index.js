@@ -105,7 +105,7 @@ async function actionNeeded(text) {
     prompt: `- Todo: Answer yes or no for the next statement: Does the input require an action?
     - Desired Format: yes or no
     - Input: ${text}`,
-    max_tokens: 5,
+    max_tokens: 50,
     temperature: 0.2,
     n: 1,
     stop: ["yes", "no"],
@@ -129,7 +129,7 @@ async function eventPlanned(text) {
     prompt: `- Todo: Answer yes or no for the next statement: Does the input create or update an event
     - Desired Format: yes or no
     - Input: ${text}`,
-    max_tokens: 5,
+    max_tokens: 50,
     temperature: 0.2,
     n: 1,
     stop: ["yes", "no"],
