@@ -163,19 +163,19 @@ async function eventPlanned(text) {
         content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
       },
     ],
-    // temperature: 0,
-    // max_tokens: 64,
-    // top_p: 1.0,
-    // frequency_penalty: 0.0,
-    // presence_penalty: 0.0,
-    // n: 1,
-    // stop: ["yes", "no"],
+    temperature: 0,
+    max_tokens: 64,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 0.0,
+    n: 1,
+    stop: ["yes", "no"],
   });
 
   console.log(text);
-  console.log(result.data.choices[0].message);
+  console.log(result.data.choices[0].message.content);
   const is_true =
-    result.data.choices[0].message.toLowerCase() === "yes" ? 1 : 0;
+    result.data.choices[0].message.content.toLowerCase() === "yes" ? 1 : 0;
 
   return is_true;
 }
