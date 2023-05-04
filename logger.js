@@ -1,15 +1,21 @@
 const winston = require("winston");
 const winstonDaily = require("winston-daily-rotate-file");
 const appRoot = require("app-root-path");
+const moment = require("moment-timezone");
 
 const { combine, timestamp, label, printf } = winston.format;
 
 //* 로그 파일 저장 경로 → 루트 경로/logs 폴더
 const logDir = `${appRoot}/logs`;
 
+// 한국시간(KST)으로 변환하는 함수
+const convertToKST = (timestamp) => {
+  return moment(timestamp).tz("Asia/Seoul").format("YYYY-MM-DD HH:mm:ss");
+};
+
 //* log 출력 포맷 정의 함수
 const logFormat = printf(({ level, message, label, timestamp }) => {
-  return `${timestamp} [${label}] ${level}: ${message}`; // 날짜 [시스템이름] 로그레벨 메세지
+  return `${convertToKST(timestamp)} [${label}] ${level}: ${message}`; // 날짜 [시스템이름] 로그레벨 메세지
 });
 
 /*
