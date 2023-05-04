@@ -700,6 +700,9 @@ app.post("/webhook/gmail", async (req, res) => {
       //gmail_content_summarized 추출
       let gmail_content_summarized;
       try {
+        if (typeof message.gmail_content !== "string") {
+          throw new Error("message.gmail_content is not a string");
+        }
         const gmail_content_summarized_st = await summarizeText(
           message.gmail_content
         );
