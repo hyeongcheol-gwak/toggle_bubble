@@ -79,12 +79,12 @@ async function summarizeText(text) {
 
   const openai = new OpenAIApi(configuration);
 
-  //해당 propmt는 공식 문서에 따라 작성된 것임
+  //해당 propmt는 최적치를 찾기 위해 계속 바뀔 필요가 있음
   const result = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `Summarize the following text in one or two sentences:\n\n${text}`,
     temperature: 0.7,
-    max_tokens: 64,
+    max_tokens: 1000,
     top_p: 1.0,
     frequency_penalty: 0.0,
     presence_penalty: 0.0,
@@ -95,6 +95,11 @@ async function summarizeText(text) {
   return summary;
 }
 
+/**
+ * text에 답장이 필요한 지 openAi를 통해 확인하는 함수
+ * @param {string} text
+ * @returns 1(true) or 0(false)
+ */
 async function actionNeeded(text) {
   const configuration = new Configuration({
     apiKey: config.OPENAI_API_KEY,
@@ -115,6 +120,7 @@ async function actionNeeded(text) {
   });
 
   ////////////////
+  // //해당 gpt 모델을 사용하고 싶을 경우 주석을 해제
   // const result = await openai.createChatCompletion({
   //   model: "gpt-3.5-turbo",
   //   messages: [
@@ -133,6 +139,7 @@ async function actionNeeded(text) {
   // });
   ////////////////
 
+  //openAi의 응답에 "yes"가 포함되어 있다면 1을 저장
   const is_true = result.data.choices[0].text
     .trim()
     .toLowerCase()
@@ -142,6 +149,11 @@ async function actionNeeded(text) {
   return is_true;
 }
 
+/**
+ * text에 이벤트와 관련한 내용이 있는 지 openAi를 통해 확인하고, 이벤트와 관련한 내용이 있다면 이에 대해 반환하는 함수
+ * @param {string} text
+ * @returns is_true = 1(true) or 0(false), eventDateTime = yyyy-mm-dd HH:MM:SS, eventTitile = string, eventDescription = string
+ */
 async function eventPlanned(text) {
   const configuration = new Configuration({
     apiKey: config.OPENAI_API_KEY,
@@ -150,6 +162,7 @@ async function eventPlanned(text) {
   const openai = new OpenAIApi(configuration);
 
   ////////////////
+  // //해당 gpt 모델을 사용하고 싶을 경우 주석을 해제
   // const result = await openai.createCompletion({
   //   model: "text-davinci-003",
   //   prompt: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
@@ -180,12 +193,14 @@ async function eventPlanned(text) {
     stop: ["yes", "no"],
   });
 
+  //openAi의 응답에 "yes"가 포함되어 있다면 1을 저장
   const is_true = result.data.choices[0].message.content
     .toLowerCase()
     .includes("yes")
     ? 1
     : 0;
 
+  //현재 시간을 추출하기 위해 필요한 요소
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -194,11 +209,14 @@ async function eventPlanned(text) {
   const minute = String(now.getMinutes()).padStart(2, "0");
   const second = String(now.getSeconds()).padStart(2, "0");
 
+  //각각에 대한 default 값을 아래와 같이 설정
   let eventDateTime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
   let eventTitile = "eventTitile";
   let eventDescription = "eventDescription";
 
+  //이벤트가 text 안에 존재할 시 아래의 코드를 진행
   if (is_true == 1) {
+    // Date and time을 text에서 openAi를 통해 추출
     const resultEventDateTime = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [
@@ -213,16 +231,18 @@ async function eventPlanned(text) {
       n: 1,
     });
 
-    // Date and time 추출
+    //openAi의 응답을 필터링
     const dateTimeMatch =
       resultEventDateTime.data.choices[0].message.content.match(
         /\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/
       );
 
+    //openAi의 응답이 정상적일 경우 이를 저장, 아닐 경우 default 값을 유지
     eventDateTime = dateTimeMatch
       ? dateTimeMatch[0]
       : `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 
+    // Event title과 Event description를 text에서 openAi를 통해 추출
     const resultEventTitileDescription = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [
@@ -237,20 +257,24 @@ async function eventPlanned(text) {
       n: 1,
     });
 
-    // Event title 추출
+    //openAi의 응답을 필터링
     const titleRegex = /Event title: (.*)\n/;
     const titleMatch =
       resultEventTitileDescription.data.choices[0].message.content.match(
         titleRegex
       );
+
+    //openAi의 응답이 정상적일 경우 이를 저장, 아닐 경우 default 값을 유지
     eventTitile = titleMatch ? titleMatch[1] : "eventTitile";
 
-    // Event description 추출
+    //openAi의 응답을 필터링
     const descriptionRegex = /Event description: (.*)/;
     const descriptionMatch =
       resultEventTitileDescription.data.choices[0].message.content.match(
         descriptionRegex
       );
+
+    //openAi의 응답이 정상적일 경우 이를 저장, 아닐 경우 default 값을 유지
     eventDescription = descriptionMatch
       ? descriptionMatch[1]
       : "eventDescription";
