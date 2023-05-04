@@ -26,10 +26,7 @@ const logFormat = printf(({ level, message, label, timestamp }) => {
 const logger = winston.createLogger({
   //* 로그 출력 형식 정의
   format: combine(
-    timestamp({
-      format: "YYYY-MM-DD HH:mm:ss",
-      options: { timezone: "Asia/Seoul" },
-    }),
+    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     label({ label: "togglecampus" }), // 어플리케이션 이름
     logFormat // log 출력 포맷
     //? format: combine() 에서 정의한 timestamp와 label 형식값이 logFormat에 들어가서 정의되게 된다. level이나 message는 콘솔에서 자동 정의
