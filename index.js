@@ -10,6 +10,7 @@ const { Configuration, OpenAIApi } = require("openai");
 
 const config = require("./config/config");
 const logger = require("./logger");
+const { log } = require("winston");
 
 const CLIENT_ID = config.CLIENT_ID;
 const CLIENT_SECRET = config.CLIENT_SECRET;
@@ -222,14 +223,18 @@ async function eventPlanned(text) {
       messages: [
         {
           role: "user",
-          content: `Find date and time, and convert them to this format: YYYY-MM-DD HH:MI:SS in this texts:\n\n${text}`,
+          content: `Find date and time, fill in the missing information using the current date and time, and convert them to this format: YYYY-MM-DD HH:MI:SS in this texts:\n\n${text}`,
         },
       ],
-      max_tokens: 300,
+      max_tokens: 100,
       temperature: 0,
       top_p: 1,
       n: 1,
     });
+
+    logger.info(
+      `OpenAi find event date and time From new gmail: ${resultEventDateTime.data.choices[0].message.content}`
+    );
 
     //openAi의 응답을 필터링
     const dateTimeMatch =
