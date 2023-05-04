@@ -65,16 +65,6 @@ const logger = winston.createLogger({
 logger.add(
   new winston.transports.Console({
     format: winston.format.combine(
-      winston.format.timestamp({
-        format: "YYYY-MM-DD HH:mm:ss",
-        // 아래처럼 UTC를 한국시간으로 변경하는 코드를 추가합니다.
-        transform: function (timeZoneOffset) {
-          return new Date(Date.now() + timeZoneOffset).toLocaleString("ko-KR", {
-            timeZone: "Asia/Seoul",
-          });
-        },
-      }),
-      winston.format.label({ label: "togglecampus" }),
       winston.format.colorize(), // 색깔 넣어서 출력
       winston.format.simple() // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
     ),
