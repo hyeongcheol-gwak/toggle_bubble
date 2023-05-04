@@ -114,6 +114,7 @@ async function actionNeeded(text) {
     stop: ["yes", "no"],
   });
 
+  ////////////////
   // const result = await openai.createChatCompletion({
   //   model: "gpt-3.5-turbo",
   //   messages: [
@@ -130,6 +131,7 @@ async function actionNeeded(text) {
   //   // n: 1,
   //   // stop: ["yes", "no"],
   // });
+  ////////////////
 
   const is_true = result.data.choices[0].text
     .trim()
@@ -147,6 +149,7 @@ async function eventPlanned(text) {
 
   const openai = new OpenAIApi(configuration);
 
+  ////////////////
   // const result = await openai.createCompletion({
   //   model: "text-davinci-003",
   //   prompt: `Answer "yes" or "no". Decide whether questioner need to make or modify a schedule or not after reading the following text:\n\n${text}`,
@@ -158,6 +161,7 @@ async function eventPlanned(text) {
   //   n: 1,
   //   stop: ["yes", "no"],
   // });
+  ////////////////
 
   const result = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
@@ -176,15 +180,83 @@ async function eventPlanned(text) {
     stop: ["yes", "no"],
   });
 
-  console.log(text);
-  console.log(result.data.choices[0].message.content);
   const is_true = result.data.choices[0].message.content
     .toLowerCase()
     .includes("yes")
     ? 1
     : 0;
 
-  return is_true;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+  const second = String(now.getSeconds()).padStart(2, "0");
+
+  let eventDateTime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+  let eventTitile = "eventTitile";
+  let eventDescription = "eventDescription";
+
+  if (is_true == 1) {
+    const resultEventDateTime = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: `Find date and time, and convert them to this format: YYYY-MM-DD HH:MI:SS in this texts:\n\n${text}`,
+        },
+      ],
+      max_tokens: 300,
+      temperature: 0,
+      top_p: 1,
+      n: 1,
+    });
+
+    // Date and time 추출
+    const dateTimeMatch =
+      resultEventDateTime.data.choices[0].message.content.match(
+        /\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/
+      );
+
+    eventDateTime = dateTimeMatch
+      ? dateTimeMatch[0]
+      : `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+
+    const resultEventTitileDescription = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: `Find event title and event description in this texts:\n\n${text}`,
+        },
+      ],
+      max_tokens: 300,
+      temperature: 0,
+      top_p: 1,
+      n: 1,
+    });
+
+    // Event title 추출
+    const titleRegex = /Event title: (.*)\n/;
+    const titleMatch =
+      resultEventTitileDescription.data.choices[0].message.content.match(
+        titleRegex
+      );
+    eventTitile = titleMatch ? titleMatch[1] : "eventTitile";
+
+    // Event description 추출
+    const descriptionRegex = /Event description: (.*)/;
+    const descriptionMatch =
+      resultEventTitileDescription.data.choices[0].message.content.match(
+        descriptionRegex
+      );
+    eventDescription = descriptionMatch
+      ? descriptionMatch[1]
+      : "eventDescription";
+  }
+
+  return { is_true, eventDateTime, eventTitile, eventDescription };
 }
 
 /**
@@ -665,7 +737,7 @@ app.post("/webhook/gmail", async (req, res) => {
           gmail_content_summarized
         ) {
           connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`, `event_title`, `event_description`, `event_date_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
             [
               message.gmail_from,
               message.gmail_to,
@@ -674,7 +746,10 @@ app.post("/webhook/gmail", async (req, res) => {
               gmail_content_summarized,
               bubbleEmail,
               isActionNeeded,
-              isEventPlanned,
+              isEventPlanned.is_true,
+              isEventPlanned.eventTitile,
+              isEventPlanned.eventDescription,
+              isEventPlanned.eventDateTime,
             ],
             function (error) {
               if (error) throw error;
