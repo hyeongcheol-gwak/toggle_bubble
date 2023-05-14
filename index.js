@@ -317,7 +317,7 @@ async function getLatestGmail(gmail) {
   const { payload } = message;
 
   //gmail_content 추출
-  let bodyData;
+  let bodyData = null;
 
   if (payload.parts && payload.parts.length > 0) {
     for (let i = 0; i < payload.parts.length; i++) {
@@ -329,6 +329,10 @@ async function getLatestGmail(gmail) {
     }
   } else {
     bodyData = payload.body.data;
+  }
+
+  if (!bodyData) {
+    return null;
   }
 
   const gmail_content_st = Buffer.from(bodyData, "base64").toString("utf-8");
@@ -663,6 +667,10 @@ app.post("/webhook/gmail", async (req, res) => {
       } catch (error) {
         logger.error("While getting latest gmail:", error);
         return res.status(500).send("Error while getting latest gmail");
+      }
+
+      if (!message) {
+        return res.sendStatus(200);
       }
 
       ////////////////
