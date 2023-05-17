@@ -224,7 +224,7 @@ async function eventPlanned(text) {
       messages: [
         {
           role: "user",
-          content: `Find date and time, fill in the missing information using the current date and time, and convert them to this format: YYYY-MM-DD HH:MI:SS in this texts:\n\n${text}`,
+          content: `Find date and time, fill in the missing information properly, and convert them to this format: YYYY-MM-DD HH:MI:SS in this texts:\n\n${text}`,
         },
       ],
       max_tokens: 100,
