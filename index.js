@@ -1,5 +1,6 @@
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
+const axios = require("axios");
 
 const express = require("express");
 
@@ -289,6 +290,63 @@ async function eventPlanned(text) {
 }
 
 /**
+ * bubbleEmail을 통해 bubbleDB에서 특정 유저의 카테코리 값을 가져오고, openAi를 통해 주어진 text를 categorization하는 함수
+ * @param {text} bubbleEmail
+ * @param {text} text
+ */
+async function categorization(bubbleEmail, text) {
+  const bubble_request_url = `https://togglecampus.org/version-test/api/1.1/obj/user?constraints=[ { "key": "_all", "constraint_type": "equals", "value": "${bubbleEmail}" }]`;
+  axios
+    .get(bubble_request_url)
+    .then(async (response) => {
+      const categories = await response.data.response.results[0].category;
+      await categories.push("etc");
+
+      const configuration = new Configuration({
+        apiKey: config.OPENAI_API_KEY,
+      });
+
+      const openai = new OpenAIApi(configuration);
+
+      const result = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: `Answer with one of ${categories}. Categorize the following sentences into one of ${categories}:\n\n${text}`,
+        temperature: 0,
+        max_tokens: 64,
+        top_p: 1.0,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0,
+        n: 1,
+      });
+
+      ////////////////
+      // //해당 gpt 모델을 사용하고 싶을 경우 주석을 해제
+      // const result = await openai.createChatCompletion({
+      //   model: "gpt-3.5-turbo",
+      //   messages: [
+      //     {
+      //       role: "user",
+      //       content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+      //     },
+      //   ],
+      //   // temperature: 0,
+      //   // max_tokens: 64,
+      //   // top_p: 1.0,
+      //   // frequency_penalty: 0.0,
+      //   // presence_penalty: 0.0,
+      //   // n: 1,
+      //   // stop: ["yes", "no"],
+      // });
+      ////////////////
+
+      return result.data.choices[0].text.trim().toLowerCase();
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
+/**
  * gmail_refresh_token을 통해 유저의 가장 최신 gmail을 추출하고 해당 gmail에서 DB 저장에 필요한 정보를 필터링하여 결과로 반환하는 함수
  * @param {string} refreshToken
  * @returns gmail_from, gmail_to, gmail_subject, gmail_content_summarized, gmail_content,
@@ -302,10 +360,6 @@ async function getLatestGmail(gmail) {
 
   //0번째가 가장 최신 gmail
   const message_st = response_st.data.messages[0];
-
-  if (!message_st) {
-    return null;
-  }
 
   const messageResponse_st = await gmail.users.messages.get({
     userId: "me",
@@ -331,6 +385,7 @@ async function getLatestGmail(gmail) {
     bodyData = payload.body.data;
   }
 
+  //bodyData 값이 없을 경우 null을 반환
   if (!bodyData) {
     return null;
   }
@@ -669,6 +724,7 @@ app.post("/webhook/gmail", async (req, res) => {
         return res.status(500).send("Error while getting latest gmail");
       }
 
+      //message의 값이 null, 즉 getLatestGmail 함수 내에서 bodyData 변수 안에 적절한 값이 없을 경우 api 종료
       if (!message) {
         return res.sendStatus(200);
       }
@@ -759,6 +815,17 @@ app.post("/webhook/gmail", async (req, res) => {
           );
       }
 
+      //category 추출
+      let category;
+      try {
+        category = await categorization(bubbleEmail, message.gmail_content);
+      } catch (error) {
+        logger.error("While deciding caetgory of gmail content:", error);
+        return res
+          .status(500)
+          .send("Error While deciding caetgory of gmail content");
+      }
+
       //mySql DB 연결
       const connection = mysql.createConnection({
         host: config.MYSQLHOST,
@@ -777,7 +844,7 @@ app.post("/webhook/gmail", async (req, res) => {
           gmail_content_summarized
         ) {
           connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`, `event_title`, `event_description`, `event_date_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`, `event_title`, `event_description`, `event_date_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
             [
               message.gmail_from,
               message.gmail_to,
@@ -790,6 +857,7 @@ app.post("/webhook/gmail", async (req, res) => {
               isEventPlanned.eventTitile,
               isEventPlanned.eventDescription,
               isEventPlanned.eventDateTime,
+              category,
             ],
             function (error) {
               if (error) throw error;

@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "app-root-path": "^3.1.0",
+    "axios": "^1.4.0",
     "body-parser": "^1.20.2",
     "express": "^4.18.2",
     "google-auth-library": "^8.7.0",
