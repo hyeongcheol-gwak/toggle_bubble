@@ -338,6 +338,7 @@ async function categorization(bubbleEmail, text) {
       //   // stop: ["yes", "no"],
       // });
       ////////////////
+      console.log(result.data.choices[0].text.trim().toLowerCase());
 
       return result.data.choices[0].text.trim().toLowerCase();
     })
@@ -819,6 +820,7 @@ app.post("/webhook/gmail", async (req, res) => {
       let category;
       try {
         category = await categorization(bubbleEmail, message.gmail_content);
+        console.log(category);
       } catch (error) {
         logger.error("While deciding caetgory of gmail content:", error);
         return res
