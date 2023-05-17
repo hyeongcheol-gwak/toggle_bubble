@@ -844,7 +844,7 @@ app.post("/webhook/gmail", async (req, res) => {
           gmail_content_summarized
         ) {
           connection.query(
-            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`, `event_title`, `event_description`, `event_date_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
+            "INSERT INTO `gmail_collected` (`from`, `to`, `subject`, `content`, `content_summarized`, `bubble_email`, `is_action_needed`, `is_event_planned`, `event_title`, `event_description`, `event_date_time`, `category`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `content_summarized` = VALUES(`content_summarized`), `created_date` = CURRENT_TIMESTAMP",
             [
               message.gmail_from,
               message.gmail_to,
