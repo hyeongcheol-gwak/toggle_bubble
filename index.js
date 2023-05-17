@@ -822,7 +822,6 @@ app.post("/webhook/gmail", async (req, res) => {
       let category;
       try {
         category = await categorization(bubbleEmail, message.gmail_content);
-        console.log(category);
       } catch (error) {
         logger.error("While deciding caetgory of gmail content:", error);
         return res
