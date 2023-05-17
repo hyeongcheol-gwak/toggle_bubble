@@ -341,8 +341,9 @@ async function categorization(bubbleEmail, text) {
   let category_to_use = "etc";
   for (const caetgory of categories) {
     if (text_to_trim.includes(caetgory)) {
-      category_to_use = caetgory
+      category_to_use = caetgory;
       break;
+    }
   }
 
   return category_to_use;
