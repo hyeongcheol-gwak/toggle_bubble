@@ -296,55 +296,56 @@ async function eventPlanned(text) {
  */
 async function categorization(bubbleEmail, text) {
   const bubble_request_url = `https://togglecampus.org/version-test/api/1.1/obj/user?constraints=[ { "key": "_all", "constraint_type": "equals", "value": "${bubbleEmail}" }]`;
-  axios
-    .get(bubble_request_url)
-    .then(async (response) => {
-      const categories = await response.data.response.results[0].category;
-      await categories.push("etc");
+  const response = await axios.get(bubble_request_url);
+  const categories = await response.data.response.results[0].category;
+  await categories.push("etc");
 
-      const configuration = new Configuration({
-        apiKey: config.OPENAI_API_KEY,
-      });
+  const configuration = new Configuration({
+    apiKey: config.OPENAI_API_KEY,
+  });
 
-      const openai = new OpenAIApi(configuration);
+  const openai = new OpenAIApi(configuration);
 
-      const result = await openai.createCompletion({
-        model: "text-davinci-003",
-        prompt: `Answer with one of ${categories}. Categorize the following sentences into one of ${categories}:\n\n${text}`,
-        temperature: 0,
-        max_tokens: 64,
-        top_p: 1.0,
-        frequency_penalty: 0.0,
-        presence_penalty: 0.0,
-        n: 1,
-      });
+  const result = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `Answer with one of ${categories}. Categorize the following sentences into one of ${categories}:\n\n${text}`,
+    temperature: 0,
+    max_tokens: 64,
+    top_p: 1.0,
+    frequency_penalty: 0.0,
+    presence_penalty: 0.0,
+    n: 1,
+  });
 
-      ////////////////
-      // //해당 gpt 모델을 사용하고 싶을 경우 주석을 해제
-      // const result = await openai.createChatCompletion({
-      //   model: "gpt-3.5-turbo",
-      //   messages: [
-      //     {
-      //       role: "user",
-      //       content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
-      //     },
-      //   ],
-      //   // temperature: 0,
-      //   // max_tokens: 64,
-      //   // top_p: 1.0,
-      //   // frequency_penalty: 0.0,
-      //   // presence_penalty: 0.0,
-      //   // n: 1,
-      //   // stop: ["yes", "no"],
-      // });
-      ////////////////
-      console.log(result.data.choices[0].text.trim().toLowerCase());
+  ////////////////
+  // //해당 gpt 모델을 사용하고 싶을 경우 주석을 해제
+  // const result = await openai.createChatCompletion({
+  //   model: "gpt-3.5-turbo",
+  //   messages: [
+  //     {
+  //       role: "user",
+  //       content: `Answer "yes" or "no". Decide whether additional actions such as replies are needed or not in the following text::\n\n${text}`,
+  //     },
+  //   ],
+  //   // temperature: 0,
+  //   // max_tokens: 64,
+  //   // top_p: 1.0,
+  //   // frequency_penalty: 0.0,
+  //   // presence_penalty: 0.0,
+  //   // n: 1,
+  //   // stop: ["yes", "no"],
+  // });
+  ////////////////
 
-      return result.data.choices[0].text.trim().toLowerCase();
-    })
-    .catch((error) => {
-      throw error;
-    });
+  const text_to_trim = result.data.choices[0].text.trim().toLowerCase();
+  let category_to_use = "etc";
+  for (const caetgory of categories) {
+    const category_to_use = text_to_trim.includes(caetgory) ? caetgory : "etc";
+
+    if (category_to_use != "etc") break;
+  }
+
+  return category_to_use;
 }
 
 /**
