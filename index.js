@@ -340,9 +340,9 @@ async function categorization(bubbleEmail, text) {
   const text_to_trim = result.data.choices[0].text.trim().toLowerCase();
   let category_to_use = "etc";
   for (const caetgory of categories) {
-    const category_to_use = text_to_trim.includes(caetgory) ? caetgory : "etc";
-
-    if (category_to_use != "etc") break;
+    if (text_to_trim.includes(caetgory)) {
+      category_to_use = caetgory
+      break;
   }
 
   return category_to_use;
